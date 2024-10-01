@@ -4,7 +4,7 @@ import { TonConnectUIProvider } from '@townsquarelabs/ui-vue';
 import MainView from './views/MainView.vue';
 
 const options = {
-	manifestUrl: 'https://o6pwyd-88-201-232-88.ru.tuna.am/tonconnect-manifest.json',
+	manifestUrl: 'https://ux1132-88-201-232-88.ru.tuna.am/tonconnect-manifest.json',
 };
 </script>
 
