@@ -7,21 +7,16 @@ import (
 )
 
 var Config = struct {
-	Port int `env:"PORT" envDefault:"8081"`
-}{}
-
-var Proof = struct {
-	PayloadSignatureKey string `env:"TONPROOF_PAYLOAD_SIGNATURE_KEY" envDefault:"top_secret_phrase"`
-	PayloadLifeTimeSec  int64  `env:"TONPROOF_PAYLOAD_LIFETIME_SEC" envDefault:"300"`
-	ProofLifeTimeSec    int64  `env:"TONPROOF_PROOF_LIFETIME_SEC" envDefault:"300"`
-	ExampleDomain       string `env:"TONPROOF_EXAMPLE_DOMAIN" envDefault:"ux1132-88-201-232-88.ru.tuna.am"`
+	Port  int `env:"PORT" envDefault:"8081"`
+	Proof struct {
+		PayloadSignatureKey string `env:"TONPROOF_PAYLOAD_SIGNATURE_KEY,required"`
+		PayloadLifeTimeSec  int64  `env:"TONPROOF_PAYLOAD_LIFETIME_SEC" envDefault:"300"`
+		ProofLifeTimeSec    int64  `env:"TONPROOF_PROOF_LIFETIME_SEC" envDefault:"300"`
+	}
 }{}
 
 func LoadConfig() {
 	if err := env.Parse(&Config); err != nil {
 		log.Fatalf("config parsing failed: %v\n", err)
-	}
-	if err := env.Parse(&Proof); err != nil {
-		log.Panicf("[‼️  Config parsing failed] %+v\n", err)
 	}
 }

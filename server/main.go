@@ -3,10 +3,10 @@ package main
 import (
 	"fmt"
 	"github.com/TON-Market/tma/server/config"
-	"github.com/tonkeeper/tongo/liteapi"
-	"time"
-
 	_ "net/http/pprof"
+
+	"github.com/tonkeeper/tongo/liteapi"
+	"github.com/tonkeeper/tongo/tonconnect"
 
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
@@ -18,24 +18,34 @@ func main() {
 	config.LoadConfig()
 
 	e := echo.New()
-	e.Static("/", "./")
 	e.Use(middleware.RecoverWithConfig(middleware.RecoverConfig{
 		Skipper:           nil,
 		DisableStackAll:   true,
 		DisablePrintStack: false,
 	}))
 	e.Use(middleware.Logger())
-	var err error
-	networks["-239"], err = liteapi.NewClientWithDefaultMainnet()
-	if err != nil {
-		log.Fatal(err)
-	}
-	networks["-3"], err = liteapi.NewClientWithDefaultTestnet()
-	if err != nil {
-		log.Fatal(err)
-	}
+	e.Static("/", "./")
 
-	h := newHandler(config.Proof.PayloadSignatureKey, time.Duration(config.Proof.ProofLifeTimeSec)*time.Second)
+	mainNetClient, err := liteapi.NewClientWithDefaultMainnet()
+	if err != nil {
+		log.Fatalf("failed init mainnet liteapi client")
+	}
+	networks["-239"] = mainNetClient
+
+	testNetClient, err := liteapi.NewClientWithDefaultTestnet()
+	if err != nil {
+		log.Fatalf("failed init testnet liteapi client")
+	}
+	networks["-3"] = testNetClient
+
+	payloadLifeTime := config.Config.Proof.PayloadLifeTimeSec
+	proofLifeTime := config.Config.Proof.ProofLifeTimeSec
+	tonConnectMainNet, err := tonconnect.NewTonConnect(mainNetClient, config.Config.Proof.PayloadSignatureKey,
+		tonconnect.WithLifeTimePayload(payloadLifeTime), tonconnect.WithLifeTimeProof(proofLifeTime))
+	tonConnectTestNet, err := tonconnect.NewTonConnect(testNetClient, config.Config.Proof.PayloadSignatureKey,
+		tonconnect.WithLifeTimePayload(payloadLifeTime), tonconnect.WithLifeTimeProof(proofLifeTime))
+
+	h := newHandler(tonConnectMainNet, tonConnectTestNet)
 
 	registerHandlers(e, h)
 
