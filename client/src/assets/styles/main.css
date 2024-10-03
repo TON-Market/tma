@@ -1,0 +1,15 @@
+@import './base.css';
+@import './ton.css';
+
+#app {
+	width: 600px;
+	max-width: 100dvw;
+	height: 100dvh;
+	margin: 0 auto;
+	font-weight: normal;
+}
+
+.fit {
+	width: 100%;
+	height: 100%;
+}

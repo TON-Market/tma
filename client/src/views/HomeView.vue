@@ -2,7 +2,7 @@
 import { type Locales, useTonConnectUI } from '@townsquarelabs/ui-vue';
 import { TonConnectButton } from '@townsquarelabs/ui-vue';
 
-import { useWallet } from '@/stores/wallet';
+import { useWallet } from '@/services/account';
 
 const [tonConnectUI, setOptions] = useTonConnectUI();
 
@@ -11,7 +11,7 @@ const api = useWallet();
 setOptions({ language: 'ru' as Locales });
 
 async function bet() {
-	const data = await wallet.bet();
+	const data = await api.bet();
 
 	console.log(data);
 
@@ -19,6 +19,8 @@ async function bet() {
 		messages: [data],
 	});
 }
+
+async function test() {}
 
 tonConnectUI.setConnectRequestParameters({
 	state: 'loading',
@@ -48,5 +50,6 @@ tonConnectUI.onStatusChange(wallet => {
 
 <template>
 	<TonConnectButton />
+	<button @click="test">TEST</button>
 	<button @click="bet">PREDICT</button>
 </template>
