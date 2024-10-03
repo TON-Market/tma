@@ -5,11 +5,11 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/TON-Market/tma/server/datatype"
+	"github.com/tonkeeper/tongo"
 	"io"
 	"net/http"
 	"time"
 
-	"github.com/tonkeeper/tongo"
 	"github.com/tonkeeper/tongo/tonconnect"
 
 	"github.com/golang-jwt/jwt"
@@ -121,22 +121,60 @@ func (h *handler) PayloadHandler(c echo.Context) error {
 func (h *handler) GetAccountInfo(c echo.Context) error {
 	ctx := c.Request().Context()
 	log := log.WithContext(ctx).WithField("prefix", "GetAccountInfo")
-	user := c.Get("user").(*jwt.Token)
-	claims := user.Claims.(*jwtCustomClaims)
-	addr, err := tongo.ParseAccountID(claims.Address)
+
+	// Получаем куки
+	cookie, err := c.Cookie("AuthToken")
 	if err != nil {
-		return c.JSON(HttpResErrorWithLog(fmt.Sprintf("can't parse acccount: %v", claims.Address), http.StatusBadRequest, log))
+		return c.JSON(HttpResErrorWithLog(fmt.Sprintf("can't get cookie: %v", err), http.StatusBadRequest, log))
 	}
 
-	net := networks[c.QueryParam("network")]
-	if net == nil {
-		return c.JSON(HttpResErrorWithLog(fmt.Sprintf("undefined network: %v", c.QueryParam("network")), http.StatusBadRequest, log))
-	}
+	signedToken := cookie.Value
 
-	address, err := GetAccountInfo(c.Request().Context(), addr, net)
+	token, err := jwt.ParseWithClaims(signedToken, &jwtCustomClaims{}, func(token *jwt.Token) (interface{}, error) {
+		return []byte(h.tonConnectMainNet.GetSecret()), nil
+	})
 	if err != nil {
-		return c.JSON(HttpResErrorWithLog(fmt.Sprintf("get account info error: %v", err), http.StatusBadRequest, log))
-
+		return c.JSON(HttpResErrorWithLog(fmt.Sprintf("invalid token: %v", err), http.StatusUnauthorized, log))
 	}
-	return c.JSON(http.StatusOK, address)
+
+	if claims, ok := token.Claims.(*jwtCustomClaims); ok && token.Valid {
+		if time.Unix(claims.StandardClaims.ExpiresAt, 0).Before(time.Now()) {
+			return c.JSON(HttpResErrorWithLog("token has expired", http.StatusUnauthorized, log))
+		}
+
+		net := networks["-239"]
+
+		addr, err := tongo.ParseAddress(claims.Address)
+		if err != nil {
+			log.Fatalln(err)
+		}
+
+		info, err := GetAccountInfo(ctx, addr.ID, net)
+		if err != nil {
+			return c.JSON(HttpResErrorWithLog(fmt.Sprintf("get account info error: %v", err), http.StatusBadRequest, log))
+		}
+
+		return c.JSON(http.StatusOK, info)
+	} else {
+		return c.JSON(HttpResErrorWithLog("invalid token claims", http.StatusUnauthorized, log))
+	}
+}
+
+func (h *handler) validateUser(auth string, c echo.Context) (bool, error) {
+	log := log.WithContext(context.Background()).WithField("prefix", "auth request")
+	token, err := jwt.ParseWithClaims(auth, &jwtCustomClaims{}, func(token *jwt.Token) (interface{}, error) {
+		return []byte(h.tonConnectMainNet.GetSecret()), nil
+	})
+	if err != nil {
+		return false, c.JSON(HttpResErrorWithLog("token has expired", http.StatusUnauthorized, log))
+	}
+
+	if claims, ok := token.Claims.(*jwtCustomClaims); ok && token.Valid {
+		if time.Unix(claims.StandardClaims.ExpiresAt, 0).Before(time.Now()) {
+			return false, c.JSON(HttpResErrorWithLog("token has expired", http.StatusUnauthorized, log))
+		}
+		return true, nil
+	} else {
+		return false, c.JSON(HttpResErrorWithLog("invalid token claims", http.StatusUnauthorized, log))
+	}
 }
