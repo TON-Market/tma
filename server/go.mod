@@ -5,14 +5,13 @@ go 1.23.1
 require (
 	github.com/caarlos0/env/v6 v6.10.1
 	github.com/golang-jwt/jwt v3.2.2+incompatible
+	github.com/google/uuid v1.6.0
 	github.com/labstack/echo/v4 v4.12.0
 	github.com/sirupsen/logrus v1.9.3
-	github.com/tonkeeper/tongo v1.9.9
+	github.com/tonkeeper/tongo v1.10.2
 )
 
 require (
-	github.com/golang-jwt/jwt/v4 v4.5.0 // indirect
-	github.com/labstack/echo-jwt v0.0.0-20221127215225-c84d41a71003 // indirect
 	github.com/labstack/gommon v0.4.2 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect

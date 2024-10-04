@@ -97,7 +97,7 @@ func (h *handler) ProofHandler(c echo.Context) error {
 	cookie.Expires = time.Now().Add(24 * 365 * time.Hour)
 	cookie.Path = "/"
 	cookie.HttpOnly = true
-	cookie.Secure = true
+	cookie.Secure = false
 	c.SetCookie(cookie)
 
 	return c.JSON(http.StatusOK, echo.Map{

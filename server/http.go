@@ -16,12 +16,6 @@ func registerHandlers(e *echo.Echo, h *handler) {
 		AllowMethods: []string{echo.POST},
 	}))
 	g.Use(middleware.CORS())
-	//g.GET("/get-address", h.GetAccountInfo, middleware.CORSWithConfig(middleware.CORSConfig{
-	//	AllowOrigins: []string{"*"},
-	//	AllowMethods: []string{echo.GET},
-	//}), echojwt.WithConfig(echojwt.Config{
-	//	SigningKey: []byte(config.Config.Proof.PayloadSignatureKey),
-	//}))
 	g.GET("/get-address", h.GetAccountInfo, middleware.CORSWithConfig(middleware.CORSConfig{
 		AllowOrigins: []string{"*"},
 		AllowMethods: []string{echo.GET},
