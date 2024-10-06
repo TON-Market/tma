@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"github.com/TON-Market/tma/server/datatype"
 	"github.com/TON-Market/tma/server/datatype/event"
+	"github.com/TON-Market/tma/server/datatype/token"
+	"github.com/google/uuid"
 	"github.com/tonkeeper/tongo"
 	"io"
 	"net/http"
@@ -212,6 +214,24 @@ func (h *handler) GetEvents(c echo.Context) error {
 	}
 
 	return c.JSON(http.StatusOK, getEventsResponse)
+}
+
+// AddDeposit - тестовая функция добавления депозита
+func (h *handler) AddDeposit(c echo.Context) error {
+	log := log.WithContext(context.Background()).WithField("prefix", "GetEvents")
+
+	eventIDInput := c.QueryParam("eventId")
+
+	u, err := uuid.Parse(eventIDInput)
+	if err != nil {
+		return c.JSON(HttpResErrorWithLog("incorrect event id passed", http.StatusBadRequest, log))
+	}
+
+	if err := event.Keeper().AddDeposit(context.Background(), u, 100, token.A); err != nil {
+		return c.JSON(HttpResErrorWithLog(fmt.Sprintf("internal server error: %s", err.Error()), http.StatusInternalServerError, log))
+	}
+
+	return c.JSON(http.StatusOK, "ok")
 }
 
 type Tag struct {

@@ -48,10 +48,11 @@ func main() {
 		tonconnect.WithLifeTimePayload(payloadLifeTime), tonconnect.WithLifeTimeProof(proofLifeTime))
 
 	h := newHandler(tonConnectMainNet, tonConnectTestNet)
+	w := newSocket()
 
 	event.Keeper().Start(context.Background())
 
-	registerHandlers(e, h)
+	registerHandlers(e, h, w)
 
 	log.Fatal(e.Start(fmt.Sprintf(":%v", config.Config.Port)))
 }

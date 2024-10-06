@@ -5,7 +5,7 @@ import (
 	"github.com/labstack/echo/v4/middleware"
 )
 
-func registerHandlers(e *echo.Echo, h *handler) {
+func registerHandlers(e *echo.Echo, h *handler, w *socket) {
 	g := e.Group("/ton-market")
 	g.POST("/generate-payload", h.PayloadHandler, middleware.CORSWithConfig(middleware.CORSConfig{
 		AllowOrigins: []string{"*"},
@@ -35,4 +35,15 @@ func registerHandlers(e *echo.Echo, h *handler) {
 		AllowOrigins: []string{"*"},
 		AllowMethods: []string{echo.GET},
 	}))
+
+	g.GET("/add-deposit", h.AddDeposit, middleware.CORSWithConfig(middleware.CORSConfig{
+		AllowOrigins: []string{"*"},
+		AllowMethods: []string{echo.GET},
+	}))
+
+	g.GET("/ws", w.updateEvent, middleware.CORSWithConfig(
+		middleware.CORSConfig{
+			AllowOrigins: []string{"*"},
+			AllowMethods: []string{echo.GET},
+		}))
 }

@@ -96,6 +96,7 @@ type storage struct {
 }
 
 type EventKeeper struct {
+	Ch chan *EventDTO
 	*snapshot
 	*storage
 }
@@ -347,6 +348,7 @@ func newEventKeeper() *EventKeeper {
 	s.m[e8.ID] = e8
 	s.m[e9.ID] = e9
 	return &EventKeeper{
+		make(chan *EventDTO),
 		&snapshot{
 			mu:   sync.RWMutex{},
 			list: make([]*EventDTO, 0),
@@ -367,7 +369,7 @@ func Keeper() *EventKeeper {
 	return singleton
 }
 
-func (k *EventKeeper) Start(_ context.Context) {
+func (k *EventKeeper) Start(ctx context.Context) {
 	ticker := time.NewTicker(5 * time.Second)
 	defer ticker.Stop()
 
@@ -379,19 +381,8 @@ func (k *EventKeeper) Start(_ context.Context) {
 	k.storage.mu.RUnlock()
 
 	l := make([]*EventDTO, 0, len(events))
-	for _, v := range events {
-		v.RLock()
-		bets := v.GetBets()
-		collateral := bets[0].Collateral + bets[1].Collateral
-		l = append(l, &EventDTO{
-			ID:         v.ID,
-			Tag:        v.Tag,
-			Collateral: collateral,
-			LogoLink:   v.LogoLink,
-			Title:      v.Title,
-			Bets:       bets,
-		})
-		v.RUnlock()
+	for _, e := range events {
+		l = append(l, k.convertEvent(ctx, e))
 	}
 
 	sort.Slice(l, func(i, j int) bool {
@@ -402,6 +393,22 @@ func (k *EventKeeper) Start(_ context.Context) {
 	defer k.snapshot.mu.Unlock()
 
 	k.snapshot.list = l
+}
+
+func (k *EventKeeper) convertEvent(_ context.Context, e *Event) *EventDTO {
+	e.RLock()
+	defer e.RUnlock()
+	bets := e.GetBets()
+	collateral := bets[0].Collateral + bets[1].Collateral
+	dto := &EventDTO{
+		ID:         e.ID,
+		Tag:        e.Tag,
+		Collateral: collateral,
+		LogoLink:   e.LogoLink,
+		Title:      e.Title,
+		Bets:       bets,
+	}
+	return dto
 }
 
 var ErrNoSuchEventDtoInSnapshot = errors.New("err no such event dto in snapshot")
@@ -450,4 +457,21 @@ func (k *EventKeeper) GetSnapshot(_ context.Context, tag EventTag, page int) ([]
 	}
 
 	return l[start:end], totalPages, nil
+}
+
+var ErrNoSuchEventInStorage = errors.New("err no such event in storage")
+
+// AddDeposit тестовая функция
+func (k *EventKeeper) AddDeposit(ctx context.Context, eventId uuid.UUID, d float64, t token.Token) error {
+	e, ok := k.storage.m[eventId]
+	if !ok {
+		return ErrNoSuchEventInStorage
+	}
+
+	e.AddDeposit(d, t)
+
+	dto := k.convertEvent(ctx, e)
+
+	k.Ch <- dto
+	return nil
 }
