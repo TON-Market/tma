@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/TON-Market/tma/server/datatype/token"
 	"github.com/google/uuid"
+	"math"
 	"sort"
 	"sync"
 	"time"
@@ -22,40 +23,65 @@ const (
 	No
 )
 
+type Bet struct {
+	token.Token `json:"token"`
+	Collateral  float64 `json:"collateral"`
+	Title       string  `json:"title"`
+	Percentage  int     `json:"percentage"`
+}
+
 // EventDTO - snapshot of Event
 type EventDTO struct {
 	ID         uuid.UUID `json:"id"`
 	Tag        EventTag  `json:"tag"`
-	Collateral uint64    `json:"collateral"`
-	LogoLink   string    `json:"logo_link"`
+	Collateral float64   `json:"collateral"`
+	LogoLink   string    `json:"logoLink"`
 	Title      string    `json:"title"`
+	Bets       []*Bet    `json:"bets"`
 }
 
 // Event Concurrent object
 type Event struct {
 	ID uuid.UUID
 	sync.RWMutex
-	Tag      EventTag
-	collA    uint64
-	collB    uint64
-	LogoLink string
-	Title    string
+	Tag             EventTag
+	LogoLink        string
+	Title           string
+	TotalCollateral float64
+	Bets            map[token.Token]*Bet
 }
 
-func (e *Event) GetTotalDeposit() uint64 {
+func (e *Event) GetBets() []*Bet {
 	e.RLock()
 	defer e.RUnlock()
-	return e.collA + e.collB
+
+	betSlice := make([]*Bet, 0, 2)
+	for _, b := range e.Bets {
+		betSlice = append(betSlice, &Bet{
+			Token:      b.Token,
+			Collateral: b.Collateral,
+			Title:      b.Title,
+			Percentage: b.Percentage,
+		})
+	}
+
+	return betSlice
 }
 
-func (e *Event) AddDeposit(d uint64, t token.Token) {
+func (e *Event) AddDeposit(d float64, t token.Token) {
 	e.Lock()
 	defer e.Unlock()
-	if t == token.A {
-		e.collA += d
-	} else {
-		e.collB += d
-	}
+
+	b := e.Bets[t]
+	bComplement := e.Bets[t.Complement()]
+	b.Collateral += d
+
+	total := b.Collateral + bComplement.Collateral
+
+	e.TotalCollateral = total
+
+	b.Percentage = int(b.Collateral / total)
+	bComplement.Percentage = 1 - b.Percentage
 }
 
 // snapshot sync of storage every 5 seconds
@@ -70,20 +96,262 @@ type storage struct {
 }
 
 type EventKeeper struct {
-	snapshot
-	storage
+	*snapshot
+	*storage
 }
 
-func NewEventKeeper() *EventKeeper {
+func newEventKeeper() *EventKeeper {
+	e := &Event{
+		ID:              uuid.New(),
+		RWMutex:         sync.RWMutex{},
+		Tag:             Politic,
+		LogoLink:        "https://tfj34t-88-201-232-88.ru.tuna.am/logo/elections2024.jpg",
+		Title:           "2024 USA elections",
+		TotalCollateral: 0,
+		Bets: map[token.Token]*Bet{
+			token.A: {
+				Token:      token.A,
+				Collateral: 0,
+				Title:      "Yes",
+				Percentage: 0,
+			},
+
+			token.B: {
+				Token:      token.B,
+				Collateral: 0,
+				Title:      "No",
+				Percentage: 0,
+			},
+		},
+	}
+	e1 := &Event{
+		ID:              uuid.New(),
+		RWMutex:         sync.RWMutex{},
+		Tag:             Politic,
+		LogoLink:        "https://tfj34t-88-201-232-88.ru.tuna.am/logo/elections2024.jpg",
+		Title:           "2024 USA elections",
+		TotalCollateral: 0,
+		Bets: map[token.Token]*Bet{
+			token.A: {
+				Token:      token.A,
+				Collateral: 0,
+				Title:      "Yes",
+				Percentage: 0,
+			},
+
+			token.B: {
+				Token:      token.B,
+				Collateral: 0,
+				Title:      "No",
+				Percentage: 0,
+			},
+		},
+	}
+	e2 := &Event{
+		ID:              uuid.New(),
+		RWMutex:         sync.RWMutex{},
+		Tag:             Politic,
+		LogoLink:        "https://tfj34t-88-201-232-88.ru.tuna.am/logo/elections2024.jpg",
+		Title:           "2024 USA elections",
+		TotalCollateral: 0,
+		Bets: map[token.Token]*Bet{
+			token.A: {
+				Token:      token.A,
+				Collateral: 0,
+				Title:      "Yes",
+				Percentage: 0,
+			},
+
+			token.B: {
+				Token:      token.B,
+				Collateral: 0,
+				Title:      "No",
+				Percentage: 0,
+			},
+		},
+	}
+	e3 := &Event{
+		ID:              uuid.New(),
+		RWMutex:         sync.RWMutex{},
+		Tag:             Politic,
+		LogoLink:        "https://tfj34t-88-201-232-88.ru.tuna.am/logo/elections2024.jpg",
+		Title:           "2024 USA elections",
+		TotalCollateral: 0,
+		Bets: map[token.Token]*Bet{
+			token.A: {
+				Token:      token.A,
+				Collateral: 0,
+				Title:      "Yes",
+				Percentage: 0,
+			},
+
+			token.B: {
+				Token:      token.B,
+				Collateral: 0,
+				Title:      "No",
+				Percentage: 0,
+			},
+		},
+	}
+	e4 := &Event{
+		ID:              uuid.New(),
+		RWMutex:         sync.RWMutex{},
+		Tag:             Politic,
+		LogoLink:        "https://tfj34t-88-201-232-88.ru.tuna.am/logo/elections2024.jpg",
+		Title:           "2024 USA elections",
+		TotalCollateral: 0,
+		Bets: map[token.Token]*Bet{
+			token.A: {
+				Token:      token.A,
+				Collateral: 0,
+				Title:      "Yes",
+				Percentage: 0,
+			},
+
+			token.B: {
+				Token:      token.B,
+				Collateral: 0,
+				Title:      "No",
+				Percentage: 0,
+			},
+		},
+	}
+	e5 := &Event{
+		ID:              uuid.New(),
+		RWMutex:         sync.RWMutex{},
+		Tag:             Politic,
+		LogoLink:        "https://tfj34t-88-201-232-88.ru.tuna.am/logo/elections2024.jpg",
+		Title:           "2024 USA elections",
+		TotalCollateral: 0,
+		Bets: map[token.Token]*Bet{
+			token.A: {
+				Token:      token.A,
+				Collateral: 0,
+				Title:      "Yes",
+				Percentage: 0,
+			},
+
+			token.B: {
+				Token:      token.B,
+				Collateral: 0,
+				Title:      "No",
+				Percentage: 0,
+			},
+		},
+	}
+	e6 := &Event{
+		ID:              uuid.New(),
+		RWMutex:         sync.RWMutex{},
+		Tag:             Politic,
+		LogoLink:        "https://tfj34t-88-201-232-88.ru.tuna.am/logo/elections2024.jpg",
+		Title:           "2024 USA elections",
+		TotalCollateral: 0,
+		Bets: map[token.Token]*Bet{
+			token.A: {
+				Token:      token.A,
+				Collateral: 0,
+				Title:      "Yes",
+				Percentage: 0,
+			},
+
+			token.B: {
+				Token:      token.B,
+				Collateral: 0,
+				Title:      "No",
+				Percentage: 0,
+			},
+		},
+	}
+	e7 := &Event{
+		ID:              uuid.New(),
+		RWMutex:         sync.RWMutex{},
+		Tag:             Politic,
+		LogoLink:        "https://tfj34t-88-201-232-88.ru.tuna.am/logo/elections2024.jpg",
+		Title:           "2024 USA elections",
+		TotalCollateral: 0,
+		Bets: map[token.Token]*Bet{
+			token.A: {
+				Token:      token.A,
+				Collateral: 0,
+				Title:      "Yes",
+				Percentage: 0,
+			},
+
+			token.B: {
+				Token:      token.B,
+				Collateral: 0,
+				Title:      "No",
+				Percentage: 0,
+			},
+		},
+	}
+	e8 := &Event{
+		ID:              uuid.New(),
+		RWMutex:         sync.RWMutex{},
+		Tag:             Politic,
+		LogoLink:        "https://tfj34t-88-201-232-88.ru.tuna.am/logo/elections2024.jpg",
+		Title:           "2024 USA elections",
+		TotalCollateral: 0,
+		Bets: map[token.Token]*Bet{
+			token.A: {
+				Token:      token.A,
+				Collateral: 0,
+				Title:      "Yes",
+				Percentage: 0,
+			},
+
+			token.B: {
+				Token:      token.B,
+				Collateral: 0,
+				Title:      "No",
+				Percentage: 0,
+			},
+		},
+	}
+	e9 := &Event{
+		ID:              uuid.New(),
+		RWMutex:         sync.RWMutex{},
+		Tag:             Politic,
+		LogoLink:        "https://tfj34t-88-201-232-88.ru.tuna.am/logo/elections2024.jpg",
+		Title:           "2024 USA elections",
+		TotalCollateral: 0,
+		Bets: map[token.Token]*Bet{
+			token.A: {
+				Token:      token.A,
+				Collateral: 0,
+				Title:      "Yes",
+				Percentage: 0,
+			},
+
+			token.B: {
+				Token:      token.B,
+				Collateral: 0,
+				Title:      "No",
+				Percentage: 0,
+			},
+		},
+	}
+
+	s := &storage{
+		mu: sync.RWMutex{},
+		m:  make(map[uuid.UUID]*Event),
+	}
+	s.m[e.ID] = e
+	s.m[e1.ID] = e1
+	s.m[e2.ID] = e2
+	s.m[e3.ID] = e3
+	s.m[e4.ID] = e4
+	s.m[e5.ID] = e5
+	s.m[e6.ID] = e6
+	s.m[e7.ID] = e7
+	s.m[e8.ID] = e8
+	s.m[e9.ID] = e9
 	return &EventKeeper{
-		snapshot{
+		&snapshot{
 			mu:   sync.RWMutex{},
 			list: make([]*EventDTO, 0),
 		},
-		storage{
-			mu: sync.RWMutex{},
-			m:  make(map[uuid.UUID]*Event),
-		},
+		s,
 	}
 }
 
@@ -94,7 +362,7 @@ var (
 
 func Keeper() *EventKeeper {
 	once.Do(func() {
-		singleton = NewEventKeeper()
+		singleton = newEventKeeper()
 	})
 	return singleton
 }
@@ -113,12 +381,15 @@ func (k *EventKeeper) Start(_ context.Context) {
 	l := make([]*EventDTO, 0, len(events))
 	for _, v := range events {
 		v.RLock()
+		bets := v.GetBets()
+		collateral := bets[0].Collateral + bets[1].Collateral
 		l = append(l, &EventDTO{
 			ID:         v.ID,
 			Tag:        v.Tag,
-			Collateral: v.GetTotalDeposit(),
+			Collateral: collateral,
 			LogoLink:   v.LogoLink,
 			Title:      v.Title,
+			Bets:       bets,
 		})
 		v.RUnlock()
 	}
@@ -147,7 +418,7 @@ func (k *EventKeeper) GetByID(_ context.Context, id uuid.UUID) (*EventDTO, error
 		ErrNoSuchEventDtoInSnapshot.Error(), id.String())
 }
 
-func (k *EventKeeper) GetSnapshot(_ context.Context, tag EventTag, page int) ([]*EventDTO, error) {
+func (k *EventKeeper) GetSnapshot(_ context.Context, tag EventTag, page int) ([]*EventDTO, int, error) {
 	k.snapshot.mu.RLock()
 	defer k.snapshot.mu.RUnlock()
 
@@ -164,17 +435,19 @@ func (k *EventKeeper) GetSnapshot(_ context.Context, tag EventTag, page int) ([]
 		}
 	}
 
-	pageSize := 10
+	pageSize := 4
 	start := (page - 1) * pageSize
 	end := start + pageSize
 
+	totalPages := int(math.Ceil(float64(len(l)) / float64(pageSize)))
+
 	if start >= len(l) {
-		return []*EventDTO{}, nil
+		return []*EventDTO{}, totalPages, nil
 	}
 
 	if end > len(l) {
 		end = len(l)
 	}
 
-	return l[start:end], nil
+	return l[start:end], totalPages, nil
 }

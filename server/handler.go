@@ -181,6 +181,11 @@ func (h *handler) validateUser(auth string, c echo.Context) (bool, error) {
 	}
 }
 
+type GetEventsResponse struct {
+	Items []*event.EventDTO `json:"items"`
+	Pages int               `json:"pages"`
+}
+
 func (h *handler) GetEvents(c echo.Context) error {
 	log := log.WithContext(context.Background()).WithField("prefix", "GetEvents")
 
@@ -196,15 +201,52 @@ func (h *handler) GetEvents(c echo.Context) error {
 		return c.JSON(HttpResErrorWithLog("incorrect tag passed", http.StatusBadRequest, log))
 	}
 
-	list, err := event.Keeper().GetSnapshot(context.Background(), event.EventTag(tag), page)
+	list, totalPages, err := event.Keeper().GetSnapshot(context.Background(), event.EventTag(tag), page)
 	if err != nil {
 		return c.JSON(HttpResErrorWithLog(fmt.Sprintf("internal server error: %s", err.Error()), http.StatusInternalServerError, log))
 	}
 
-	raw, err := json.Marshal(list)
-	if err != nil {
-		return c.JSON(HttpResErrorWithLog(fmt.Sprintf("internal server error: %s", err.Error()), http.StatusInternalServerError, log))
+	getEventsResponse := &GetEventsResponse{
+		Items: list,
+		Pages: totalPages,
 	}
 
-	return c.JSON(http.StatusOK, raw)
+	return c.JSON(http.StatusOK, getEventsResponse)
+}
+
+type Tag struct {
+	ID    event.EventTag `json:"id"`
+	Title string         `json:"title"`
+}
+
+func (h *handler) getTags(c echo.Context) error {
+	tagList := []*Tag{
+		{
+			ID:    event.No,
+			Title: "No",
+		},
+		{
+			ID:    event.Politic,
+			Title: "Politics",
+		},
+		{
+			ID:    event.Economics,
+			Title: "Economics",
+		},
+		{
+			ID:    event.Crypto,
+			Title: "Crypto",
+		},
+		{
+			ID:    event.Culture,
+			Title: "Culture",
+		},
+
+		{
+			ID:    event.Other,
+			Title: "Other",
+		},
+	}
+
+	return c.JSON(http.StatusOK, tagList)
 }

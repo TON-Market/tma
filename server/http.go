@@ -30,4 +30,9 @@ func registerHandlers(e *echo.Echo, h *handler) {
 		AllowOrigins: []string{"*"},
 		AllowMethods: []string{echo.GET},
 	}))
+
+	g.GET("/get-tags", h.getTags, middleware.CORSWithConfig(middleware.CORSConfig{
+		AllowOrigins: []string{"*"},
+		AllowMethods: []string{echo.GET},
+	}))
 }

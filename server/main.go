@@ -1,8 +1,10 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"github.com/TON-Market/tma/server/config"
+	"github.com/TON-Market/tma/server/datatype/event"
 	_ "net/http/pprof"
 
 	"github.com/tonkeeper/tongo/liteapi"
@@ -46,6 +48,8 @@ func main() {
 		tonconnect.WithLifeTimePayload(payloadLifeTime), tonconnect.WithLifeTimeProof(proofLifeTime))
 
 	h := newHandler(tonConnectMainNet, tonConnectTestNet)
+
+	event.Keeper().Start(context.Background())
 
 	registerHandlers(e, h)
 
