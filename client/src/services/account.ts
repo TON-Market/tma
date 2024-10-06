@@ -2,7 +2,7 @@ import { defineStore } from 'pinia';
 
 import { $API } from '@/api';
 
-export const useWallet = defineStore('wallet', {
+export const useAccount = defineStore('account', {
 	actions: {
 		bet() {
 			return $API.get('get-address');
