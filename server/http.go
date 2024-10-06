@@ -25,4 +25,9 @@ func registerHandlers(e *echo.Echo, h *handler) {
 		AuthScheme: "Bearer",
 		Validator:  h.validateUser,
 	}))
+
+	g.GET("/get-events", h.GetEvents, middleware.CORSWithConfig(middleware.CORSConfig{
+		AllowOrigins: []string{"*"},
+		AllowMethods: []string{echo.GET},
+	}))
 }

@@ -5,9 +5,11 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/TON-Market/tma/server/datatype"
+	"github.com/TON-Market/tma/server/datatype/event"
 	"github.com/tonkeeper/tongo"
 	"io"
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/tonkeeper/tongo/tonconnect"
@@ -177,4 +179,32 @@ func (h *handler) validateUser(auth string, c echo.Context) (bool, error) {
 	} else {
 		return false, c.JSON(HttpResErrorWithLog("invalid token claims", http.StatusUnauthorized, log))
 	}
+}
+
+func (h *handler) GetEvents(c echo.Context) error {
+	log := log.WithContext(context.Background()).WithField("prefix", "GetEvents")
+
+	pageInput := c.QueryParam("page")
+	page, err := strconv.Atoi(pageInput)
+	if err != nil {
+		return c.JSON(HttpResErrorWithLog("incorrect page passed", http.StatusBadRequest, log))
+	}
+
+	tagInput := c.QueryParam("tag")
+	tag, err := strconv.Atoi(tagInput)
+	if err != nil {
+		return c.JSON(HttpResErrorWithLog("incorrect tag passed", http.StatusBadRequest, log))
+	}
+
+	list, err := event.Keeper().GetSnapshot(context.Background(), event.EventTag(tag), page)
+	if err != nil {
+		return c.JSON(HttpResErrorWithLog(fmt.Sprintf("internal server error: %s", err.Error()), http.StatusInternalServerError, log))
+	}
+
+	raw, err := json.Marshal(list)
+	if err != nil {
+		return c.JSON(HttpResErrorWithLog(fmt.Sprintf("internal server error: %s", err.Error()), http.StatusInternalServerError, log))
+	}
+
+	return c.JSON(http.StatusOK, raw)
 }

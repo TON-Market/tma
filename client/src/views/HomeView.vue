@@ -49,7 +49,6 @@ tonConnectUI.onStatusChange(wallet => {
 </script>
 
 <template>
-	<TonConnectButton />
 	<button @click="test">TEST</button>
 	<button @click="bet">PREDICT</button>
 </template>
