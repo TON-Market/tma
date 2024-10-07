@@ -13,6 +13,7 @@ FROM alpine:latest
 WORKDIR /root/
 
 COPY --from=builder /app/main .
+COPY --from=builder /app/tonconnect-manifest.json .
 
 EXPOSE 8081
 
