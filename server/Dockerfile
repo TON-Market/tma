@@ -1,16 +1,22 @@
-FROM golang:1.20 AS gobuild
-WORKDIR /build-dir
-COPY go.mod .
-COPY go.sum .
-RUN go mod download all
+# Указываем базовый образ, который содержит Golang
+FROM golang:1.23.1-alpine AS builder
+
+WORKDIR /app
+COPY go.mod go.sum ./
+RUN go mod download
 COPY . .
-RUN go build -o /tmp/tonproof github.com/tonkeeper/tonproof
 
+RUN go build -o main .
 
-FROM ubuntu AS tonproof
-RUN apt-get update && \
-    apt-get install -y openssl ca-certificates
-COPY --from=gobuild /tmp/tonproof /app/tonproof
-CMD ["/app/tonproof"]
+FROM alpine:latest
 
+WORKDIR /root/
 
+COPY --from=builder /app/main .
+
+EXPOSE 8081
+
+CMD ["./main"]
+
+# docker build -t tma-server2 .
+# docker run -e TONPROOF_PAYLOAD_SIGNATURE_KEY=value -p 8081:8081 tma-server2
