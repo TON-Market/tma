@@ -1,7 +1,12 @@
 <script setup lang="ts">
-import { TonConnectButton } from '@townsquarelabs/ui-vue';
+import { TonConnectButton, useTonAddress, useTonConnectUI } from '@townsquarelabs/ui-vue';
+import { useTonWallet } from '@townsquarelabs/ui-vue';
 
 import Logo from '@/assets/icons/Logo.vue';
+
+// const [tonConnectUI] = useTonConnectUI();
+
+// const address = useTonAddress();
 </script>
 
 <template>
@@ -17,5 +22,6 @@ header {
 	justify-content: space-between;
 	align-items: center;
 	padding: 20px;
+	gap: 40px;
 }
 </style>

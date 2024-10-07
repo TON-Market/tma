@@ -1,14 +1,16 @@
 <script setup lang="ts">
-import { type Locales, useTonConnectUI } from '@townsquarelabs/ui-vue';
-import { TonConnectButton } from '@townsquarelabs/ui-vue';
+import { useTonConnectUI } from '@townsquarelabs/ui-vue';
+import { ref } from 'vue';
 
-import { useWallet } from '@/services/account';
+import Events from './components/Events.vue';
+import News from './components/News.vue';
 
-const [tonConnectUI, setOptions] = useTonConnectUI();
+import TextBox from '@/components/TextBox.vue';
+import { useAccount } from '@/services/account';
 
-const api = useWallet();
+const [tonConnectUI] = useTonConnectUI();
 
-setOptions({ language: 'ru' as Locales });
+const api = useAccount();
 
 async function bet() {
 	const data = await api.bet();
@@ -20,15 +22,11 @@ async function bet() {
 	});
 }
 
-async function test() {}
-
 tonConnectUI.setConnectRequestParameters({
 	state: 'loading',
 });
 
 const tonProofPayload: string = await api.getProof();
-
-console.log(tonProofPayload);
 
 tonConnectUI.setConnectRequestParameters({
 	state: 'ready',
@@ -46,9 +44,16 @@ tonConnectUI.onStatusChange(wallet => {
 		});
 	}
 });
+
+const search = ref('');
 </script>
 
 <template>
-	<button @click="test">TEST</button>
-	<button @click="bet">PREDICT</button>
+	<TextBox
+		style="width: 100%"
+		v-model:value="search"
+		placeholder="Search..."
+	/>
+	<News />
+	<Events />
 </template>

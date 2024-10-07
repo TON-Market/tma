@@ -7,10 +7,14 @@ import Wallet from '@/assets/icons/Wallet.vue';
 
 <template>
 	<nav>
-		<Home />
+		<RouterLink :to="{ name: 'home' }">
+			<Home />
+		</RouterLink>
 		<Search />
 		<Gift />
-		<Wallet />
+		<RouterLink :to="{ name: 'account' }">
+			<Wallet />
+		</RouterLink>
 	</nav>
 </template>
 
@@ -20,11 +24,11 @@ nav {
 	justify-content: space-around;
 	align-items: center;
 	background: var(--color-background-soft);
-	padding: 20px;
+	padding: 10px;
 }
 
 svg:hover {
 	cursor: pointer;
-	color: #8f67ff;
+	color: var(--color-text-active);
 }
 </style>
