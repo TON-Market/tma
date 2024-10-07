@@ -14,11 +14,5 @@ export default defineConfig({
 	},
 	server: {
 		host: true,
-		proxy: {
-			'/ton-market': {
-				target: 'https://bddxbv-88-201-232-88.ru.tuna.am/',
-				changeOrigin: true,
-			},
-		},
 	},
 });

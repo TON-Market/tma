@@ -2,11 +2,13 @@ import axios from 'axios';
 
 import { useEvents } from '@/services/events';
 
+console.log(import.meta.env);
+
 export const $API = axios.create({
-	baseURL: '/ton-market/',
+	baseURL: import.meta.env.VITE_HTTP_SERVER,
 });
 
-export const $WS = new WebSocket(`ws://bddxbv-88-201-232-88.ru.tuna.am/ton-market/ws`);
+export const $WS = new WebSocket(import.meta.env.VITE_WS_SERVER);
 
 $WS.onmessage = raw => {
 	const events = useEvents();
