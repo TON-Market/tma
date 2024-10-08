@@ -52,6 +52,6 @@ input {
 }
 
 .text-field:focus-within {
-	border: 1px solid var(--color-border);
+	border: 1px solid var(--vt-c-blue);
 }
 </style>

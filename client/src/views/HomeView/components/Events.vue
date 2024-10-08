@@ -1,26 +1,10 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue';
-
 import EventCard from './EventCard.vue';
 
 import { useEvents } from '@/services/events';
 
 const events = useEvents();
 events.getTags();
-
-const scrollComponent = ref();
-const scrollContent = ref();
-
-onMounted(() => {
-	scrollComponent.value.addEventListener('scroll', handleScroll);
-	handleScroll();
-});
-
-async function handleScroll() {
-	if (scrollContent.value.getBoundingClientRect().bottom < scrollComponent.value.getBoundingClientRect().bottom) {
-		if (await events.nextPage()) handleScroll();
-	}
-}
 </script>
 
 <template>
@@ -34,58 +18,13 @@ async function handleScroll() {
 			{{ tag.title }}
 		</span>
 	</div>
-	<div
-		class="events"
-		ref="scrollComponent"
-	>
-		<div
-			ref="scrollContent"
-			class="events-content"
-		>
+	<div class="events">
+		<div class="events-content">
 			<EventCard
 				v-for="event in events.sorted"
 				:key="event.id"
 				:event="event"
 			/>
-
-			<!-- <EventCard
-				:event="{
-					id: '1',
-					collateral: 1,
-					logoLink:
-						'https://s3-alpha-sig.figma.com/img/4f06/46fc/52ff554687f1ed0ba834e6c65c962f38?Expires=1728864000&Key-Pair-Id=APKAQ4GOSFWCVNEHN3O4&Signature=CPI-Xr01NVlqw9fSFe9jFzkxVIcBMdJ~zL6MCLk2DQOx9hBl~NENn6QlVg86XAdzZzttlg60WMZOM9rZZQOC8PuHAFc83GOz2eoWN8cQCfF-mIuCZ-Twfq~PoPSrwh8S02~Jredgy4aZLexttww7Lj2HX39CbsQqtzs0WdyC7hf6sdMgqjvLR-LPNZkmtaMDrgulqYWZRh79reP-B3CjmUjTAO5jdMnLslIdEPpvLr1XQroDYseMs~5se0xlVygGhN8TUOgwqWixwGYvBAjm-ff6a5y~bkJFw-nmG7wPukd3~mAAp1JJe~TUxWoqYjx6bNPaOIQq6fXADhcHx43X9g__',
-					title: '2024 Election Forecast',
-					bets: [
-						{
-							name: 'Donald Trump',
-							percentage: 49,
-						},
-						{
-							name: 'Kamala Harris',
-							percentage: 51,
-						},
-					],
-				}"
-			/>
-			<EventCard
-				:event="{
-					id: '1',
-					collateral: 1,
-					logoLink:
-						'https://s3-alpha-sig.figma.com/img/4f06/46fc/52ff554687f1ed0ba834e6c65c962f38?Expires=1728864000&Key-Pair-Id=APKAQ4GOSFWCVNEHN3O4&Signature=CPI-Xr01NVlqw9fSFe9jFzkxVIcBMdJ~zL6MCLk2DQOx9hBl~NENn6QlVg86XAdzZzttlg60WMZOM9rZZQOC8PuHAFc83GOz2eoWN8cQCfF-mIuCZ-Twfq~PoPSrwh8S02~Jredgy4aZLexttww7Lj2HX39CbsQqtzs0WdyC7hf6sdMgqjvLR-LPNZkmtaMDrgulqYWZRh79reP-B3CjmUjTAO5jdMnLslIdEPpvLr1XQroDYseMs~5se0xlVygGhN8TUOgwqWixwGYvBAjm-ff6a5y~bkJFw-nmG7wPukd3~mAAp1JJe~TUxWoqYjx6bNPaOIQq6fXADhcHx43X9g__',
-					title: 'test',
-					bets: [
-						{
-							name: 'Donald Trump',
-							percentage: 49,
-						},
-						{
-							name: 'Kamala Harris',
-							percentage: 51,
-						},
-					],
-				}"
-			/> -->
 			<div
 				v-if="events.loading"
 				class="loader"
@@ -117,6 +56,11 @@ async function handleScroll() {
 	overflow-x: scroll;
 	font-family: IBM Plex Sans;
 	user-select: none;
+
+	position: sticky;
+	top: 0;
+	background: var(--color-background);
+	z-index: 1000;
 }
 
 .tags span {
@@ -131,9 +75,6 @@ async function handleScroll() {
 }
 
 .events {
-	flex-grow: 1;
-	height: 0;
-	overflow-y: scroll;
 	padding-bottom: 20px;
 }
 .events-content {
