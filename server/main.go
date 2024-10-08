@@ -24,7 +24,7 @@ func main() {
 		DisablePrintStack: false,
 	}))
 	e.Use(middleware.Logger())
-	e.Static("/", "./")
+	e.Static("/", "./static")
 
 	mainNetClient, err := liteapi.NewClientWithDefaultMainnet()
 	if err != nil {

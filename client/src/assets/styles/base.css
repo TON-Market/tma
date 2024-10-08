@@ -5,8 +5,8 @@
 
 	/* --vt-c-black:   #090631; */
 	--vt-c-black: #0d0b28;
-	--vt-c-black-soft: #a290ff1a;
-	--vt-c-black-mute: #282828;
+	--vt-c-black-soft: #a290ff33;
+	--vt-c-black-mute: #a290ff1a;
 
 	--vt-c-primary-gradient: linear-gradient(180deg, #5035da 0%, #3577da 100%);
 
@@ -98,6 +98,9 @@ body {
 a {
 	color: var(--color-text);
 	text-decoration: none;
+	display: flex;
+	align-items: center;
+	justify-content: center;
 }
 
 .router-link-active.router-link-exact-active {

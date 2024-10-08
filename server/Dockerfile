@@ -10,14 +10,10 @@ RUN go build -o main .
 
 FROM alpine:latest
 
-WORKDIR /root/
+WORKDIR /app
 
 COPY --from=builder /app/main .
-COPY --from=builder /app/tonconnect-manifest.json .
 
 EXPOSE 8081
 
 CMD ["./main"]
-
-# docker build -t tma-server2 .
-# docker run -e TONPROOF_PAYLOAD_SIGNATURE_KEY=value -p 8081:8081 tma-server2

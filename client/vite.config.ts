@@ -4,7 +4,6 @@ import vue from '@vitejs/plugin-vue';
 import { defineConfig } from 'vite';
 import vueDevTools from 'vite-plugin-vue-devtools';
 
-// https://vitejs.dev/config/
 export default defineConfig({
 	plugins: [vue(), vueDevTools()],
 	resolve: {
@@ -12,7 +11,24 @@ export default defineConfig({
 			'@': fileURLToPath(new URL('./src', import.meta.url)),
 		},
 	},
+	build: {
+		outDir: './dist',
+		emptyOutDir: true,
+	},
 	server: {
 		host: true,
+		proxy: {
+			'tonconnect-manifest.json': {
+				target: 'http://localhost:8081',
+			},
+			'/api': {
+				target: 'http://localhost:8081',
+				changeOrigin: true,
+			},
+			'/ws': {
+				target: 'ws://localhost:8081',
+				ws: true,
+			},
+		},
 	},
 });

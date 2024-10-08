@@ -28,6 +28,7 @@ setOptions({ language: 'en' as Locales });
 }
 
 main {
+	display: flex;
 	flex-grow: 1;
 	padding: 0 20px;
 	display: flex;

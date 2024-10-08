@@ -54,6 +54,7 @@ export const useEvents = defineStore('events', {
 		async getTags() {
 			this.tags = (await $API.get<Tag[]>('get-tags')).data;
 		},
+		onLoaded() {},
 		async load(page: number, tag = 5, clear = false) {
 			try {
 				this.loading = true;
@@ -79,6 +80,7 @@ export const useEvents = defineStore('events', {
 				this.failed = true;
 			} finally {
 				this.loading = false;
+				this.onLoaded();
 			}
 		},
 		update(data: Event) {
@@ -90,14 +92,11 @@ export const useEvents = defineStore('events', {
 			}
 		},
 		async nextPage() {
-			if (this.loading) return false;
-			this.page++;
-			if (this.pages >= this.page) {
+			if (this.loading) return;
+			if (this.pages > this.page) {
+				this.page++;
 				await this.load(this.page, this.tag);
-				return true;
 			}
-
-			return false;
 		},
 	},
 });
