@@ -4,15 +4,15 @@ import (
 	"context"
 	"errors"
 	"github.com/TON-Market/tma/server/datatype"
-	"github.com/TON-Market/tma/server/datatype/token"
-	"github.com/google/uuid"
+	"github.com/TON-Market/tma/server/datatype/deal"
+
 	"sync"
 )
 
 type User struct {
 	ID string
 	*datatype.AccountInfo
-	DealList []*Deal
+	DealList []*deal.Deal
 }
 
 type Storage struct {
@@ -25,7 +25,7 @@ var (
 	singleton *Storage
 )
 
-func NewStorage() *Storage {
+func GetStorage() *Storage {
 	once.Do(func() {
 		singleton = &Storage{
 			RWMutex: sync.RWMutex{},
@@ -51,7 +51,7 @@ func (s *Storage) AddUser(_ context.Context, info *datatype.AccountInfo) error {
 	u := &User{
 		ID:          info.Address.Raw,
 		AccountInfo: info,
-		DealList:    make([]*Deal, 0),
+		DealList:    make([]*deal.Deal, 0),
 	}
 
 	s.m[info.Address.Raw] = u
@@ -71,55 +71,17 @@ func (s *Storage) GetUser(_ context.Context, address string) (*User, error) {
 	return u, nil
 }
 
-func (s *Storage) AddDeal(ctx context.Context, info *datatype.AccountInfo, deal *Deal) error {
-	if err := NewDealStorage().addDeal(ctx, deal); err != nil {
-		return err
-	}
-
+func (s *Storage) AddDeal(ctx context.Context, info *datatype.AccountInfo, d *deal.Deal) error {
 	u, err := s.GetUser(ctx, info.Address.Raw)
 	if err != nil {
 		return err
 	}
 
-	u.DealList = append(u.DealList, deal)
+	if err := deal.GetStorage().AddDeal(ctx, d); err != nil {
+		return err
+	}
 
-	return nil
-}
+	u.DealList = append(u.DealList, d)
 
-type Deal struct {
-	ID      uuid.UUID
-	EventID uuid.UUID
-	token.Token
-	Collateral uint64
-	Size       float64
-}
-
-type DealStorage struct {
-	sync.RWMutex
-	m map[uuid.UUID]*Deal
-}
-
-var (
-	dealStorageOnce      sync.Once
-	dealStorageSingleton *DealStorage
-)
-
-func NewDealStorage() *DealStorage {
-	dealStorageOnce.Do(func() {
-		dealStorageSingleton = &DealStorage{
-			RWMutex: sync.RWMutex{},
-			m:       make(map[uuid.UUID]*Deal),
-		}
-	})
-	return dealStorageSingleton
-}
-
-func (s *DealStorage) addDeal(_ context.Context, deal *Deal) error {
-	s.Lock()
-	defer s.RUnlock()
-
-	dealId := uuid.New()
-	deal.ID = dealId
-	s.m[dealId] = deal
 	return nil
 }

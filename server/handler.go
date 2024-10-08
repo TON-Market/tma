@@ -7,8 +7,8 @@ import (
 	"github.com/TON-Market/tma/server/datatype"
 	"github.com/TON-Market/tma/server/datatype/event"
 	"github.com/TON-Market/tma/server/datatype/token"
+	"github.com/TON-Market/tma/server/datatype/user"
 	"github.com/google/uuid"
-	"github.com/tonkeeper/tongo"
 	"io"
 	"net/http"
 	"strconv"
@@ -95,6 +95,15 @@ func (h *handler) ProofHandler(c echo.Context) error {
 		return err
 	}
 
+	info, err := getAccountInfo(context.TODO(), tp.Address, networks["-239"])
+	if err != nil {
+		return c.JSON(HttpResErrorWithLog(fmt.Errorf("get account info failed: %s", err.Error()).Error(), http.StatusInternalServerError, log))
+	}
+
+	if err := user.GetStorage().AddUser(context.TODO(), info); err != nil {
+		return c.JSON(HttpResErrorWithLog(fmt.Errorf("save user failed: %s", err.Error()).Error(), http.StatusInternalServerError, log))
+	}
+
 	cookie := new(http.Cookie)
 	cookie.Name = "AuthToken"
 	cookie.Value = signedToken
@@ -124,9 +133,8 @@ func (h *handler) PayloadHandler(c echo.Context) error {
 
 func (h *handler) GetAccountInfo(c echo.Context) error {
 	ctx := c.Request().Context()
-	log := log.WithContext(ctx).WithField("prefix", "GetAccountInfo")
+	log := log.WithContext(ctx).WithField("prefix", "getAccountInfo")
 
-	// Получаем куки
 	cookie, err := c.Cookie("AuthToken")
 	if err != nil {
 		return c.JSON(HttpResErrorWithLog(fmt.Sprintf("can't get cookie: %v", err), http.StatusBadRequest, log))
@@ -134,33 +142,28 @@ func (h *handler) GetAccountInfo(c echo.Context) error {
 
 	signedToken := cookie.Value
 
-	token, err := jwt.ParseWithClaims(signedToken, &jwtCustomClaims{}, func(token *jwt.Token) (interface{}, error) {
+	jwtToken, err := jwt.ParseWithClaims(signedToken, &jwtCustomClaims{}, func(token *jwt.Token) (interface{}, error) {
 		return []byte(h.tonConnectMainNet.GetSecret()), nil
 	})
 	if err != nil {
-		return c.JSON(HttpResErrorWithLog(fmt.Sprintf("invalid token: %v", err), http.StatusUnauthorized, log))
+		return c.JSON(HttpResErrorWithLog(fmt.Sprintf("invalid jwtToken: %v", err), http.StatusUnauthorized, log))
 	}
 
-	if claims, ok := token.Claims.(*jwtCustomClaims); ok && token.Valid {
+	if claims, ok := jwtToken.Claims.(*jwtCustomClaims); ok && jwtToken.Valid {
 		if time.Unix(claims.StandardClaims.ExpiresAt, 0).Before(time.Now()) {
-			return c.JSON(HttpResErrorWithLog("token has expired", http.StatusUnauthorized, log))
+			return c.JSON(HttpResErrorWithLog("jwtToken has expired", http.StatusUnauthorized, log))
 		}
 
 		net := networks["-239"]
 
-		addr, err := tongo.ParseAddress(claims.Address)
-		if err != nil {
-			log.Fatalln(err)
-		}
-
-		info, err := GetAccountInfo(ctx, addr.ID, net)
+		info, err := getAccountInfo(ctx, claims.Address, net)
 		if err != nil {
 			return c.JSON(HttpResErrorWithLog(fmt.Sprintf("get account info error: %v", err), http.StatusBadRequest, log))
 		}
 
 		return c.JSON(http.StatusOK, info)
 	} else {
-		return c.JSON(HttpResErrorWithLog("invalid token claims", http.StatusUnauthorized, log))
+		return c.JSON(HttpResErrorWithLog("invalid jwtToken claims", http.StatusUnauthorized, log))
 	}
 }
 
@@ -216,30 +219,12 @@ func (h *handler) GetEvents(c echo.Context) error {
 	return c.JSON(http.StatusOK, getEventsResponse)
 }
 
-// AddDeposit - тестовая функция добавления депозита
-func (h *handler) AddDeposit(c echo.Context) error {
-	log := log.WithContext(context.Background()).WithField("prefix", "GetEvents")
-
-	eventIDInput := c.QueryParam("eventId")
-
-	u, err := uuid.Parse(eventIDInput)
-	if err != nil {
-		return c.JSON(HttpResErrorWithLog("incorrect event id passed", http.StatusBadRequest, log))
-	}
-
-	if err := event.Keeper().AddDeposit(context.Background(), u, 100, token.A); err != nil {
-		return c.JSON(HttpResErrorWithLog(fmt.Sprintf("internal server error: %s", err.Error()), http.StatusInternalServerError, log))
-	}
-
-	return c.JSON(http.StatusOK, "ok")
-}
-
 type Tag struct {
 	ID    event.EventTag `json:"id"`
 	Title string         `json:"title"`
 }
 
-func (h *handler) getTags(c echo.Context) error {
+func (h *handler) GetTags(c echo.Context) error {
 	tagList := []*Tag{
 		{
 			ID:    event.No,
@@ -269,4 +254,49 @@ func (h *handler) getTags(c echo.Context) error {
 	}
 
 	return c.JSON(http.StatusOK, tagList)
+}
+
+// AddDeposit - тестовая функция добавления депозита
+func (h *handler) AddDeposit(c echo.Context) error {
+	log := log.WithContext(context.Background()).WithField("prefix", "GetEvents")
+
+	eventIDInput := c.QueryParam("eventId")
+
+	u, err := uuid.Parse(eventIDInput)
+	if err != nil {
+		return c.JSON(HttpResErrorWithLog("incorrect event id passed", http.StatusBadRequest, log))
+	}
+
+	if err := event.Keeper().AddDeposit(context.Background(), u, 100, token.A); err != nil {
+		return c.JSON(HttpResErrorWithLog(fmt.Sprintf("internal server error: %s", err.Error()), http.StatusInternalServerError, log))
+	}
+
+	return c.JSON(http.StatusOK, "ok")
+}
+
+type PayResponse struct {
+	Addr     string `json:"address"`
+	Amount   string `json:"amount"`
+	Payload  string `json:"payload"`
+	SateInit string `json:"stateInit"`
+	Net      string `json:"net"`
+}
+
+// Pay - тестовая функция для платежа
+func (h *handler) Pay(c echo.Context) error {
+	log := log.WithContext(context.Background()).WithField("prefix", "Pay")
+	ctx := context.Background()
+
+	info, err := h.getAccountInfoFromCookie(ctx, c)
+	if err != nil {
+		return c.JSON(HttpResErrorWithLog(err.Error(), http.StatusBadRequest, log))
+	}
+
+	p := &PayResponse{
+		Addr:    info.Address.Raw,
+		Amount:  "200000",
+		Payload: uuid.NewString(),
+	}
+
+	return c.JSON(http.StatusOK, p)
 }

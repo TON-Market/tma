@@ -5,14 +5,12 @@ import (
 	"fmt"
 	"github.com/TON-Market/tma/server/config"
 	"github.com/TON-Market/tma/server/datatype/event"
-	_ "net/http/pprof"
-
-	"github.com/tonkeeper/tongo/liteapi"
-	"github.com/tonkeeper/tongo/tonconnect"
-
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	log "github.com/sirupsen/logrus"
+	"github.com/tonkeeper/tongo/liteapi"
+	"github.com/tonkeeper/tongo/tonconnect"
+	_ "net/http/pprof"
 )
 
 func main() {
@@ -56,3 +54,67 @@ func main() {
 
 	log.Fatal(e.Start(fmt.Sprintf(":%v", config.Config.Port)))
 }
+
+//const SEED = "example consider fiscal mail guitar tiger duck exhibit ancient series differ wealth mix kitchen cactus upgrade unable yellow impact confirm denial mesh during dove"
+//const my_ton_keeper_addr = "UQBbRSVWRlRH0D_OJ2pzj_Kaoeo5_Q3F-6GhDayX044Xr1fU"
+//
+//func main() {
+//	ctx := context.Background()
+//
+//	client, err := liteapi.NewClientWithDefaultMainnet()
+//	if err != nil {
+//		log.Fatalf("Unable to create lite client: %v", err)
+//	}
+//
+//	pk, err := wallet.SeedToPrivateKey(SEED)
+//	if err != nil {
+//		log.Fatalln(err.Error())
+//	}
+//
+//	if err != nil {
+//		fmt.Println("Ошибка шифрования:", err)
+//		return
+//	}
+//
+//	fmt.Printf("Privte Key: %v\n", pk)
+//
+//	w, err := wallet.New(pk, wallet.HighLoadV2R2, client)
+//	if err != nil {
+//		log.Fatalln(err)
+//	}
+//
+//	addrHuman := w.GetAddress().ToHuman(false, false)
+//	fmt.Printf("Human address: %s\n", addrHuman)
+//
+//	balance, err := w.GetBalance(ctx)
+//	if err != nil {
+//		log.Fatalln(err)
+//	}
+//
+//	fmt.Printf("Balance: %d\n", balance)
+//
+//	s, err := w.StateInit()
+//	if err != nil {
+//		log.Fatalln(err)
+//	}
+//
+//	fmt.Println(s)
+//
+//	recepient, err := ton.AccountIDFromBase64Url(my_ton_keeper_addr)
+//	if err != nil {
+//		log.Fatalln(err)
+//	}
+//
+//	m := wallet.SimpleTransfer{
+//		Amount:     10000,
+//		Address:    recepient,
+//		Comment:    "Платеж из банка",
+//		Bounceable: false,
+//	}
+//
+//	err = w.Send(ctx, m)
+//	if err != nil {
+//		log.Fatalln(err)
+//	}
+//
+//}

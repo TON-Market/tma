@@ -31,14 +31,26 @@ func registerHandlers(e *echo.Echo, h *handler, w *socket) {
 		AllowMethods: []string{echo.GET},
 	}))
 
-	g.GET("/get-tags", h.getTags, middleware.CORSWithConfig(middleware.CORSConfig{
+	g.GET("/get-tags", h.GetTags, middleware.CORSWithConfig(middleware.CORSConfig{
 		AllowOrigins: []string{"*"},
 		AllowMethods: []string{echo.GET},
 	}))
 
+	// Test handler
 	g.GET("/add-deposit", h.AddDeposit, middleware.CORSWithConfig(middleware.CORSConfig{
 		AllowOrigins: []string{"*"},
 		AllowMethods: []string{echo.GET},
+	}))
+
+	// Test handler
+	g.GET("/pay", h.Pay, middleware.CORSWithConfig(middleware.CORSConfig{
+		AllowOrigins: []string{"*"},
+		AllowMethods: []string{echo.POST},
+	}), middleware.KeyAuthWithConfig(middleware.KeyAuthConfig{
+		Skipper:    middleware.DefaultSkipper,
+		KeyLookup:  "cookie:AuthToken",
+		AuthScheme: "Bearer",
+		Validator:  h.validateUser,
 	}))
 
 	g.GET("/ws", w.updateEvent, middleware.CORSWithConfig(
