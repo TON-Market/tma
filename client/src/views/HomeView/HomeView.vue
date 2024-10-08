@@ -14,25 +14,17 @@ const [tonConnectUI] = useTonConnectUI();
 
 const api = useAccount();
 
-async function bet() {
-	const data = await api.bet();
+tonConnectUI.onModalStateChange(async e => {
+	if (e.status === 'opened') {
+		tonConnectUI.setConnectRequestParameters({
+			state: 'loading',
+		});
 
-	console.log(data);
-
-	tonConnectUI.sendTransaction({
-		messages: [data],
-	});
-}
-
-tonConnectUI.setConnectRequestParameters({
-	state: 'loading',
-});
-
-const tonProofPayload: string = await api.getProof();
-
-tonConnectUI.setConnectRequestParameters({
-	state: 'ready',
-	value: { tonProof: tonProofPayload },
+		tonConnectUI.setConnectRequestParameters({
+			state: 'ready',
+			value: { tonProof: await api.getProof() },
+		});
+	}
 });
 
 tonConnectUI.onStatusChange(wallet => {
