@@ -1,0 +1,25 @@
+version: '3.9'
+
+services:
+  client:
+    container_name: client
+    build:
+        context: ./client
+        dockerfile: Dockerfile
+    volumes:
+      - static:/app/dist
+
+  server:
+    container_name: server
+    environment:
+      - TONPROOF_PAYLOAD_SIGNATURE_KEY=value
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    ports:
+      - "8081:8081"
+    volumes:
+      - static:/app/static
+
+volumes:
+  static:

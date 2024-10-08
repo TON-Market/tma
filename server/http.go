@@ -6,7 +6,7 @@ import (
 )
 
 func registerHandlers(e *echo.Echo, h *handler, w *socket) {
-	g := e.Group("/ton-market")
+	g := e.Group("/api")
 	g.POST("/generate-payload", h.PayloadHandler, middleware.CORSWithConfig(middleware.CORSConfig{
 		AllowOrigins: []string{"*"},
 		AllowMethods: []string{echo.POST},
@@ -41,7 +41,7 @@ func registerHandlers(e *echo.Echo, h *handler, w *socket) {
 		AllowMethods: []string{echo.GET},
 	}))
 
-	g.GET("/ws", w.updateEvent, middleware.CORSWithConfig(
+	e.GET("/ws", w.updateEvent, middleware.CORSWithConfig(
 		middleware.CORSConfig{
 			AllowOrigins: []string{"*"},
 			AllowMethods: []string{echo.GET},

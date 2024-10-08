@@ -12,10 +12,23 @@ export default defineConfig({
 		},
 	},
 	build: {
-		outDir: '../server/static',
+		outDir: './dist',
 		emptyOutDir: true,
 	},
 	server: {
 		host: true,
+		proxy: {
+			'tonconnect-manifest.json': {
+				target: 'http://localhost:8081',
+			},
+			'/api': {
+				target: 'http://localhost:8081',
+				changeOrigin: true,
+			},
+			'/ws': {
+				target: 'ws://localhost:8081',
+				ws: true,
+			},
+		},
 	},
 });
