@@ -58,7 +58,7 @@ func main() {
 //const SEED = "example consider fiscal mail guitar tiger duck exhibit ancient series differ wealth mix kitchen cactus upgrade unable yellow impact confirm denial mesh during dove"
 //const my_ton_keeper_addr = "UQBbRSVWRlRH0D_OJ2pzj_Kaoeo5_Q3F-6GhDayX044Xr1fU"
 //
-//func main() {
+//func m() {
 //	ctx := context.Background()
 //
 //	client, err := liteapi.NewClientWithDefaultMainnet()
@@ -116,5 +116,16 @@ func main() {
 //	if err != nil {
 //		log.Fatalln(err)
 //	}
+//
+//	state, err := w.StateInit()
+//	if err != nil {
+//		log.Fatalln(err)
+//	}
+//
+//	payload := cell.BeginCell().
+//		MustStoreUInt(0, 32).
+//		MustStoreStringSnake("KDJFKLJDLKFJLKDFJDJLKFKLDFJD").
+//		EndCell().ToBOC()
+//
 //
 //}

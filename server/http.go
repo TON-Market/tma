@@ -43,7 +43,7 @@ func registerHandlers(e *echo.Echo, h *handler, w *socket) {
 	}))
 
 	// Test handler
-	g.GET("/pay", h.Pay, middleware.CORSWithConfig(middleware.CORSConfig{
+	g.POST("/pay", h.Pay, middleware.CORSWithConfig(middleware.CORSConfig{
 		AllowOrigins: []string{"*"},
 		AllowMethods: []string{echo.POST},
 	}), middleware.KeyAuthWithConfig(middleware.KeyAuthConfig{

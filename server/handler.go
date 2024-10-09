@@ -3,12 +3,14 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"github.com/TON-Market/tma/server/datatype"
 	"github.com/TON-Market/tma/server/datatype/event"
 	"github.com/TON-Market/tma/server/datatype/token"
 	"github.com/TON-Market/tma/server/datatype/user"
 	"github.com/google/uuid"
+	"github.com/xssnick/tonutils-go/tvm/cell"
 	"io"
 	"net/http"
 	"strconv"
@@ -100,7 +102,7 @@ func (h *handler) ProofHandler(c echo.Context) error {
 		return c.JSON(HttpResErrorWithLog(fmt.Errorf("get account info failed: %s", err.Error()).Error(), http.StatusInternalServerError, log))
 	}
 
-	if err := user.GetStorage().AddUser(context.TODO(), info); err != nil {
+	if err := user.GetStorage().AddUser(context.TODO(), info); err != nil && !errors.Is(err, user.ErrUserAlreadyExists) {
 		return c.JSON(HttpResErrorWithLog(fmt.Errorf("save user failed: %s", err.Error()).Error(), http.StatusInternalServerError, log))
 	}
 
@@ -180,6 +182,7 @@ func (h *handler) validateUser(auth string, c echo.Context) (bool, error) {
 		if time.Unix(claims.StandardClaims.ExpiresAt, 0).Before(time.Now()) {
 			return false, c.JSON(HttpResErrorWithLog("token has expired", http.StatusUnauthorized, log))
 		}
+		c.Set("address", claims.Address)
 		return true, nil
 	} else {
 		return false, c.JSON(HttpResErrorWithLog("invalid token claims", http.StatusUnauthorized, log))
@@ -275,11 +278,9 @@ func (h *handler) AddDeposit(c echo.Context) error {
 }
 
 type PayResponse struct {
-	Addr     string `json:"address"`
-	Amount   string `json:"amount"`
-	Payload  string `json:"payload"`
-	SateInit string `json:"stateInit"`
-	Net      string `json:"net"`
+	Addr    string `json:"address"`
+	Amount  string `json:"amount"`
+	Payload string `json:"payload"`
 }
 
 // Pay - тестовая функция для платежа
@@ -287,16 +288,26 @@ func (h *handler) Pay(c echo.Context) error {
 	log := log.WithContext(context.Background()).WithField("prefix", "Pay")
 	ctx := context.Background()
 
-	info, err := h.getAccountInfoFromCookie(ctx, c)
+	addr := c.Get("address").(string)
+	info, err := getAccountInfo(ctx, addr, networks["-239"])
 	if err != nil {
 		return c.JSON(HttpResErrorWithLog(err.Error(), http.StatusBadRequest, log))
 	}
 
+	fmt.Printf("ADDRESS CLIENT: %s\n", info.Address.Raw)
+
+	payload, _ := cell.BeginCell().
+		MustStoreUInt(0, 32).
+		MustStoreStringSnake(uuid.NewString()).
+		EndCell().MarshalJSON()
+
 	p := &PayResponse{
-		Addr:    info.Address.Raw,
+		Addr:    "EQBRW9rjhRUNL-Sy4swYbMzm2MgvlhC2DWIZFhYp2JnSoJaA",
 		Amount:  "200000",
-		Payload: uuid.NewString(),
+		Payload: string(payload),
 	}
 
 	return c.JSON(http.StatusOK, p)
 }
+
+// EQBRW9rjhRUNL-Sy4swYbMzm2MgvlhC2DWIZFhYp2JnSoJaA
