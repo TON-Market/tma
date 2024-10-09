@@ -1,9 +1,32 @@
 <script setup lang="ts">
+import { CHAIN, TonConnectError, useTonConnectModal, useTonConnectUI } from '@townsquarelabs/ui-vue';
+
+import { useAccount } from '@/services/account';
 import type { Event } from '@/services/events';
 
 const { event } = defineProps<{
 	event: Event;
 }>();
+
+const [TonConnectUI] = useTonConnectUI();
+const modal = useTonConnectModal();
+const account = useAccount();
+
+async function pay() {
+	try {
+		const data = await TonConnectUI.sendTransaction({
+			validUntil: Math.floor(Date.now() / 1000) + 60,
+			network: CHAIN.MAINNET,
+			messages: [await account.getPaymentInfo()],
+		});
+		console.log(data);
+	} catch (e) {
+		console.log(e);
+		// if (e instanceof TonConnectError) {
+		// 	modal.open();
+		// }
+	}
+}
 </script>
 
 <template>
@@ -31,7 +54,7 @@ const { event } = defineProps<{
 				<span>{{ bet.title }}</span>
 				<div class="controls">
 					<span>{{ bet.percentage }}%</span>
-					<button>Buy</button>
+					<button @click="pay">Buy</button>
 					<button disabled>Cell</button>
 				</div>
 			</div>

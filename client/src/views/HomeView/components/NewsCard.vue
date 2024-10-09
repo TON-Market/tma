@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import BackgroundImage from '@/components/BackgroundImage.vue';
+
 const { text, image } = defineProps<{
 	text: string;
 	image?: string;
@@ -6,13 +8,9 @@ const { text, image } = defineProps<{
 </script>
 
 <template>
-	<div
+	<BackgroundImage
 		class="card"
-		:style="
-			image && {
-				backgroundImage: `url(${image})`,
-			}
-		"
+		:url="image"
 	>
 		<div class="text">
 			<p>{{ text }}</p>
@@ -20,7 +18,7 @@ const { text, image } = defineProps<{
 		<div class="controls">
 			<button>View</button>
 		</div>
-	</div>
+	</BackgroundImage>
 </template>
 
 <style scoped>
@@ -51,7 +49,7 @@ const { text, image } = defineProps<{
 }
 
 .text p {
-	width: 60%;
+	width: 70%;
 	overflow: hidden;
 	display: -webkit-box;
 	-webkit-line-clamp: 2;

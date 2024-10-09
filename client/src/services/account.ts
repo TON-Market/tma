@@ -4,8 +4,8 @@ import { $API } from '@/api';
 
 export const useAccount = defineStore('account', {
 	actions: {
-		bet() {
-			return $API.get('get-address');
+		async getPaymentInfo() {
+			return (await $API.post('pay')).data;
 		},
 		async getProof() {
 			return (await $API.post('generate-payload')).data.payload;

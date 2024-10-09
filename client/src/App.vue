@@ -4,7 +4,7 @@ import { TonConnectUIProvider } from '@townsquarelabs/ui-vue';
 import Layout from '@/layout/Layout.vue';
 
 const options = {
-	manifestUrl: '/tonconnect-manifest.json',
+	manifestUrl: import.meta.env.VITE_MANIFEST_URL,
 };
 </script>
 
@@ -15,7 +15,11 @@ const options = {
 	>
 		<Suspense>
 			<Layout>
-				<RouterView />
+				<router-view v-slot="{ Component }">
+					<keep-alive>
+						<component :is="Component" />
+					</keep-alive>
+				</router-view>
 			</Layout>
 		</Suspense>
 	</TonConnectUIProvider>
