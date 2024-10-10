@@ -21,7 +21,6 @@ import NewsCard from './NewsCard.vue';
 
 <style scoped>
 .news {
-	padding: 20px 0;
 	width: 100%;
 	display: flex;
 	overflow-x: scroll;

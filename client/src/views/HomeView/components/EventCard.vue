@@ -1,122 +1,48 @@
 <script setup lang="ts">
-import { CHAIN, TonConnectError, useTonConnectModal, useTonConnectUI } from '@townsquarelabs/ui-vue';
-
-import { useAccount } from '@/services/account';
+import Card from '@/components/Card.vue';
+import Collateral from '@/components/Collateral.vue';
+import SelectCount from '@/components/popups/SelectCount.vue';
 import type { Event } from '@/services/events';
+import { useRedirect } from '@/shared/hooks/useRedirect';
 
 const { event } = defineProps<{
 	event: Event;
 }>();
-
-const [TonConnectUI] = useTonConnectUI();
-const modal = useTonConnectModal();
-const account = useAccount();
-
-async function pay() {
-	try {
-		const data = await TonConnectUI.sendTransaction({
-			validUntil: Math.floor(Date.now() / 1000) + 60,
-			network: CHAIN.MAINNET,
-			messages: [await account.getPaymentInfo()],
-		});
-		console.log(data);
-	} catch (e) {
-		console.log(e);
-		// if (e instanceof TonConnectError) {
-		// 	modal.open();
-		// }
-	}
-}
 </script>
 
 <template>
-	<div class="card">
-		<div class="info">
-			<div class="title">
-				<div class="logo">
-					<img
-						:src="event.logoLink"
-						:alt="event.title"
-					/>
-				</div>
-				<div class="text">
-					<p>{{ event.title }}</p>
-				</div>
-			</div>
-			<div class="collateral">${{ event.collateral }} m Vol.</div>
-		</div>
-		<div class="bets">
-			<div
-				v-for="bet in event.bets"
-				:key="bet.title"
-				class="bet"
-			>
-				<span>{{ bet.title }}</span>
-				<div class="controls">
-					<span>{{ bet.percentage }}%</span>
-					<button @click="pay">Buy</button>
-					<button disabled>Cell</button>
+	<Card
+		v-bind="event"
+		@click="useRedirect('event', { id: event.id })"
+	>
+		<template #info>
+			<Collateral :value="event.collateral" />
+		</template>
+		<template #default>
+			<div class="bets">
+				<div
+					v-for="bet in event.bets"
+					:key="bet.title"
+					class="bet"
+				>
+					<span>{{ bet.title }}</span>
+					<div class="controls">
+						<span>{{ bet.percentage }}%</span>
+						<SelectCount />
+						<v-btn
+							disabled
+							text="Sell"
+						></v-btn>
+					</div>
 				</div>
 			</div>
-		</div>
-	</div>
+		</template>
+	</Card>
 </template>
 
 <style scoped>
-.card {
-	background: var(--color-background-soft);
-	color: var(--color-text-active);
-	background-size: cover;
-	background-repeat: no-repeat;
-	background-position: center center;
-	min-width: 200px;
-	border-radius: 20px;
-
-	display: flex;
-	flex-direction: column;
-	justify-content: space-between;
-}
-
-.info {
-	display: flex;
-	justify-content: space-between;
-	padding: 20px;
-}
-
-.title {
-	display: flex;
-	gap: 10px;
-	align-items: center;
-}
-
-.logo {
-	border-radius: 50%;
-	width: 30px;
-	height: 30px;
-	overflow: hidden;
-}
-
-.logo img {
-	width: 100%;
-	height: 100%;
-}
-
-.text p {
-	overflow: hidden;
-	display: -webkit-box;
-	-webkit-line-clamp: 2;
-	line-clamp: 2;
-	-webkit-box-orient: vertical;
-	font-weight: 500;
-}
-
-.collateral {
-	color: var(--color-text);
-	font-family: Montserrat;
-}
-
 .bets {
-	padding: 0 20px 20px 60px;
+	padding-left: 60px;
 	display: flex;
 	flex-direction: column;
 	gap: 10px;
@@ -128,6 +54,7 @@ async function pay() {
 
 .controls {
 	display: flex;
+	align-items: center;
 	gap: 6px;
 }
 </style>

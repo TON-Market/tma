@@ -2,7 +2,8 @@
 import { ref } from 'vue';
 
 const { url } = defineProps<{
-	url: string;
+	rounded?: boolean;
+	url?: string;
 	width?: number;
 	height?: number;
 }>();
@@ -18,15 +19,17 @@ const handleImageLoad = () => {
 	<div
 		class="image-container"
 		:style="{
-			width,
-			height,
+			borderRadius: rounded ? '50%' : '0',
+			width: (width || height) + 'px',
+			height: (height || width) + 'px',
 		}"
 	>
 		<div
-			v-if="!loaded"
+			v-if="url && !loaded"
 			class="loading-animation"
 		></div>
 		<img
+			v-if="url"
 			:src="url"
 			alt="Loaded Image"
 			@load="handleImageLoad"
@@ -39,7 +42,7 @@ const handleImageLoad = () => {
 .image-container {
 	position: relative;
 	overflow: hidden;
-	background-color: var(--color-background-gradient);
+	background: var(--color-background-gradient);
 }
 
 .loading-animation {

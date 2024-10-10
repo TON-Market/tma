@@ -107,7 +107,7 @@ a {
 	color: var(--color-text-active);
 }
 
-button {
+/* button {
 	border: none;
 	outline: none;
 	border-radius: 8px;
@@ -120,4 +120,4 @@ button {
 button:disabled {
 	opacity: 0.4;
 	cursor: default;
-}
+} */
