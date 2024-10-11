@@ -20,14 +20,14 @@ events.getTags();
 	</div>
 	<div class="events">
 		<div class="events-content">
-			<!-- events.sorted -->
-			<EventCard
-				v-for="event in new Array(20).fill({
+			<!-- new Array(20).fill({
 					id: 'string',
 					collateral: 'number',
 					logo: 'string',
 					title: 'string',
-				})"
+				}) -->
+			<EventCard
+				v-for="event in events.sorted"
 				:key="event.id"
 				:event="event"
 			/>
