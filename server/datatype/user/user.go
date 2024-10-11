@@ -3,21 +3,85 @@ package user
 import (
 	"context"
 	"errors"
-	"github.com/TON-Market/tma/server/datatype"
-	"github.com/TON-Market/tma/server/datatype/deal"
-
+	"fmt"
+	"github.com/TON-Market/tma/server/datatype/market"
+	"github.com/TON-Market/tma/server/db"
+	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/tonkeeper/tongo/tlb"
+	"strconv"
 	"sync"
 )
 
 type User struct {
-	ID string
-	*datatype.AccountInfo
-	DealList []*deal.Deal
+	RawAddr  string
+	DealList []*market.Deal
 }
 
 type Storage struct {
-	sync.RWMutex
-	m map[string]*User
+	pool *pgxpool.Pool
+}
+
+var ErrSaveUser = errors.New("save user failed")
+
+func (s *Storage) Save(ctx context.Context, u *User) error {
+	q := `INSERT INTO users (raw_addr) VALUES ($1)`
+
+	if _, err := s.pool.Exec(ctx, q, u.RawAddr); err != nil {
+		return fmt.Errorf("%v: %v", ErrSaveUser, err)
+	}
+	return nil
+}
+
+var (
+	ErrUserNotFound = errors.New("user not found in db")
+	ErrGetUser      = errors.New("get user failed")
+)
+
+func (s *Storage) Get(ctx context.Context, addr string) (*User, error) {
+	q := `SELECT raw_addr FROM users WHERE raw_addr = $1`
+
+	var user User
+
+	err := s.pool.QueryRow(ctx, q, addr).Scan(&user.RawAddr)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, errors.Join(ErrUserNotFound, err)
+		}
+		return nil, fmt.Errorf("%v: %v", ErrGetUser, err)
+	}
+
+	user.DealList = []*market.Deal{}
+
+	qDeals := `SELECT d.id, d.event_id, d.token, d.collateral, d.size
+               FROM deals d
+               JOIN user_deals ud ON d.id = ud.deal_id
+               WHERE ud.user_raw_addr = $1`
+
+	rows, err := s.pool.Query(ctx, qDeals, addr)
+	if err != nil {
+		return nil, fmt.Errorf("get user deals failed: %v", err)
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var deal market.Deal
+		var collateral string
+
+		if err := rows.Scan(&deal.ID, &deal.EventID, &deal.Token, &collateral, &deal.Size); err != nil {
+			return nil, fmt.Errorf("scan deal failed: %v", err)
+		}
+
+		grams, err := strconv.ParseUint(collateral, 10, 64)
+		if err != nil {
+			return nil, fmt.Errorf("parse collateral failed: %v", err)
+		}
+		deal.Collateral = tlb.Grams(grams)
+
+		user.DealList = append(user.DealList, &deal)
+	}
+
+	return &user, nil
 }
 
 var (
@@ -25,63 +89,11 @@ var (
 	singleton *Storage
 )
 
-func GetStorage() *Storage {
+func UserStorage() *Storage {
 	once.Do(func() {
 		singleton = &Storage{
-			RWMutex: sync.RWMutex{},
-			m:       make(map[string]*User),
+			pool: db.Get(),
 		}
 	})
 	return singleton
-}
-
-var (
-	ErrUserAlreadyExists = errors.New("err user already exists")
-	ErrUserDoesntExist   = errors.New("err user doesn't exist")
-)
-
-func (s *Storage) AddUser(_ context.Context, info *datatype.AccountInfo) error {
-	s.Lock()
-	defer s.Unlock()
-
-	if _, ok := s.m[info.Address.Raw]; ok {
-		return ErrUserAlreadyExists
-	}
-
-	u := &User{
-		ID:          info.Address.Raw,
-		AccountInfo: info,
-		DealList:    make([]*deal.Deal, 0),
-	}
-
-	s.m[info.Address.Raw] = u
-
-	return nil
-}
-
-func (s *Storage) GetUser(_ context.Context, address string) (*User, error) {
-	s.RLock()
-	defer s.RUnlock()
-
-	u, ok := s.m[address]
-	if !ok {
-		return nil, ErrUserDoesntExist
-	}
-
-	return u, nil
-}
-
-func (s *Storage) AddDeal(ctx context.Context, info *datatype.AccountInfo, d *deal.Deal) error {
-	u, err := s.GetUser(ctx, info.Address.Raw)
-	if err != nil {
-		return err
-	}
-
-	if err := deal.GetStorage().AddDeal(ctx, d); err != nil {
-		return err
-	}
-
-	u.DealList = append(u.DealList, d)
-
-	return nil
 }

@@ -4,7 +4,9 @@ import (
 	"context"
 	"fmt"
 	"github.com/TON-Market/tma/server/config"
-	"github.com/TON-Market/tma/server/datatype/event"
+	"github.com/TON-Market/tma/server/datatype/market"
+	"github.com/TON-Market/tma/server/datatype/token"
+	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	log "github.com/sirupsen/logrus"
@@ -46,86 +48,51 @@ func main() {
 		tonconnect.WithLifeTimePayload(payloadLifeTime), tonconnect.WithLifeTimeProof(proofLifeTime))
 
 	h := newHandler(tonConnectMainNet, tonConnectTestNet)
-	w := newSocket()
+	//w := newSocket()
 
-	event.Keeper().Start(context.Background())
+	market.GetMarket().Start(context.TODO())
 
-	registerHandlers(e, h, w)
+	//registerHandlers(e, h, w)
+
+	registerHandlers(e, h)
+
+	testData()
+
+	//testDb()
 
 	log.Fatal(e.Start(fmt.Sprintf(":%v", config.Config.Port)))
 }
 
-//const SEED = "example consider fiscal mail guitar tiger duck exhibit ancient series differ wealth mix kitchen cactus upgrade unable yellow impact confirm denial mesh during dove"
-//const my_ton_keeper_addr = "UQBbRSVWRlRH0D_OJ2pzj_Kaoeo5_Q3F-6GhDayX044Xr1fU"
-//
-//func m() {
-//	ctx := context.Background()
-//
-//	client, err := liteapi.NewClientWithDefaultMainnet()
-//	if err != nil {
-//		log.Fatalf("Unable to create lite client: %v", err)
-//	}
-//
-//	pk, err := wallet.SeedToPrivateKey(SEED)
-//	if err != nil {
-//		log.Fatalln(err.Error())
-//	}
-//
-//	if err != nil {
-//		fmt.Println("Ошибка шифрования:", err)
-//		return
-//	}
-//
-//	fmt.Printf("Privte Key: %v\n", pk)
-//
-//	w, err := wallet.New(pk, wallet.HighLoadV2R2, client)
-//	if err != nil {
-//		log.Fatalln(err)
-//	}
-//
-//	addrHuman := w.GetAddress().ToHuman(false, false)
-//	fmt.Printf("Human address: %s\n", addrHuman)
-//
-//	balance, err := w.GetBalance(ctx)
-//	if err != nil {
-//		log.Fatalln(err)
-//	}
-//
-//	fmt.Printf("Balance: %d\n", balance)
-//
-//	s, err := w.StateInit()
-//	if err != nil {
-//		log.Fatalln(err)
-//	}
-//
-//	fmt.Println(s)
-//
-//	recepient, err := ton.AccountIDFromBase64Url(my_ton_keeper_addr)
-//	if err != nil {
-//		log.Fatalln(err)
-//	}
-//
-//	m := wallet.SimpleTransfer{
-//		Amount:     10000,
-//		Address:    recepient,
-//		Comment:    "Платеж из банка",
-//		Bounceable: false,
-//	}
-//
-//	err = w.Send(ctx, m)
-//	if err != nil {
-//		log.Fatalln(err)
-//	}
-//
-//	state, err := w.StateInit()
-//	if err != nil {
-//		log.Fatalln(err)
-//	}
-//
-//	payload := cell.BeginCell().
-//		MustStoreUInt(0, 32).
-//		MustStoreStringSnake("KDJFKLJDLKFJLKDFJDJLKFKLDFJD").
-//		EndCell().ToBOC()
-//
-//
-//}
+func testDb() {
+	d := &market.Deal{
+		ID:          uuid.New(),
+		EventID:     uuid.New(),
+		UserRawAddr: "999",
+		Token:       token.A,
+	}
+	if err := market.GetMarket().SaveDealUnchecked(context.Background(), d); err != nil {
+		log.Fatalln(err)
+	}
+}
+
+func testData() {
+	e := &market.Event{
+		Tag:      market.Politic,
+		LogoLink: "no",
+		Title:    "Will Ton Market win hackathon?",
+		BetMap: map[token.Token]*market.Bet{
+			token.A: {
+				Token: token.A,
+				Title: "Yes",
+			},
+			token.B: {
+				Token: token.B,
+				Title: "No",
+			},
+		},
+	}
+	err := market.GetMarket().AddEvent(context.Background(), e)
+	if err != nil {
+		log.Fatalln(err)
+	}
+}
