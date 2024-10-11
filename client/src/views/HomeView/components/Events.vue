@@ -20,8 +20,14 @@ events.getTags();
 	</div>
 	<div class="events">
 		<div class="events-content">
+			<!-- events.sorted -->
 			<EventCard
-				v-for="event in events.sorted"
+				v-for="event in new Array(20).fill({
+					id: 'string',
+					collateral: 'number',
+					logo: 'string',
+					title: 'string',
+				})"
 				:key="event.id"
 				:event="event"
 			/>
@@ -52,7 +58,7 @@ events.getTags();
 	display: flex;
 	justify-content: space-between;
 	gap: 24px;
-	padding-bottom: 20px;
+	padding: 20px 0;
 	overflow-x: scroll;
 	font-family: IBM Plex Sans;
 	user-select: none;

@@ -5,10 +5,8 @@ import { onMounted, ref } from 'vue';
 import Events from './components/Events.vue';
 import News from './components/News.vue';
 
-import TextBox from '@/components/TextBox.vue';
 import { useAccount } from '@/services/account';
 import { useEvents } from '@/services/events';
-import { useNavigation } from '@/services/navigation';
 
 const [tonConnectUI] = useTonConnectUI();
 
@@ -39,21 +37,14 @@ tonConnectUI.onStatusChange(wallet => {
 	}
 });
 
-const search = ref('');
-
 const scrollElement = ref();
 const scrollContent = ref();
 
-const searchElement = ref();
-
-const navigation = useNavigation();
 const events = useEvents();
 
 onMounted(() => {
 	scrollElement.value.addEventListener('scroll', handleScroll);
 	handleScroll();
-
-	navigation.registerSearchElement(searchElement.value);
 });
 
 async function handleScroll() {
@@ -78,13 +69,6 @@ events.$onAction(async act => {
 			class="scroll-content"
 			ref="scrollContent"
 		>
-			<div ref="searchElement">
-				<TextBox
-					style="width: 100%"
-					v-model:value="search"
-					placeholder="Search..."
-				/>
-			</div>
 			<News />
 			<Events />
 		</div>

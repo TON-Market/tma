@@ -11,7 +11,7 @@ export interface Bet {
 export interface Event {
 	id: string;
 	collateral: number;
-	logoLink: string;
+	logo: string;
 	title: string;
 	bets: Bet[];
 }
