@@ -121,7 +121,11 @@ func (h *handler) Deposit(c echo.Context) error {
 		return c.JSON(HttpResErrorWithLog(err.Error(), http.StatusBadRequest, lg))
 	}
 
-	if err := market.GetMarket().Deposit(ctx, depositUid, depositReq.DepositStatus); err != nil {
+	dr := &market.DepositReq{
+		ID:            depositUid,
+		DepositStatus: depositReq.DepositStatus,
+	}
+	if err := market.GetMarket().Deposit(ctx, dr); err != nil {
 		return c.JSON(HttpResErrorWithLog(err.Error(), http.StatusInternalServerError, lg))
 	}
 

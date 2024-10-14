@@ -103,13 +103,20 @@ func a() {
 
 }
 
-func checkComment() {
+func main() {
 	tongoClient, err := liteapi.NewClientWithDefaultMainnet()
 	if err != nil {
 		fmt.Printf("Unable to create tongo client: %v", err)
 	}
 
-	accountId := ton.MustParseAccountID("EQBRW9rjhRUNL-Sy4swYbMzm2MgvlhC2DWIZFhYp2JnSoJaA")
+	//accountId := ton.MustParseAccountID("0:5b452556465447d03fce276a738ff29aa1ea39fd0dc5fba1a10dac97d38e17af")
+
+	//accountId, err := ton.AccountIDFromRaw("0:5b452556465447d03fce276a738ff29aa1ea39fd0dc5fba1a10dac97d38e17af")
+	//if err != nil {
+	//	log.Fatalln(err)
+	//}
+
+	accountId := ton.MustParseAccountID("0:5b452556465447d03fce276a738ff29aa1ea39fd0dc5fba1a10dac97d38e17af")
 
 	trxs, err := tongoClient.GetLastTransactions(context.Background(), accountId, 100)
 	if err != nil {
@@ -119,10 +126,9 @@ func checkComment() {
 	trx := trxs[0]
 
 	var t wallet.TextComment
-	if err := tlb.Unmarshal((*boc.Cell)(&trx.Msgs.InMsg.Value.Value.Body.Value), &t); err != nil {
+	if err := tlb.Unmarshal((*boc.Cell)(&trx.Msgs.OutMsgs.Values()[0].Value.Body.Value), &t); err != nil {
 		log.Fatalln(err)
 	}
 
 	fmt.Println(t)
-
 }

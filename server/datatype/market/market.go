@@ -28,7 +28,7 @@ type snapshot struct {
 }
 
 type Market struct {
-	//revisor   *revisor
+	ch        chan *DepositReq
 	client    *liteapi.Client
 	snapshot  *snapshot
 	persistor *persistor
@@ -61,6 +61,10 @@ func (m *Market) AddEvent(ctx context.Context, e *Event) error {
 
 func (m *Market) Start(ctx context.Context) {
 	ticker := time.NewTicker(5 * time.Second)
+
+	for i := 0; i < 1; i++ {
+		go m.verifyTransaction()
+	}
 
 	go func() {
 		for range ticker.C {
@@ -177,6 +181,7 @@ func GetMarket() *Market {
 			log.Fatalln(err)
 		}
 		singleton = &Market{
+			make(chan *DepositReq, 100),
 			client,
 			&snapshot{
 				sync.RWMutex{},
@@ -198,46 +203,86 @@ func GetMarket() *Market {
 	return singleton
 }
 
-func (m *Market) _Deposit(ctx context.Context, d *Deal) error {
-	d.ID = uuid.New()
-	if err := m.persistor.saveDeal(ctx, d); err != nil {
-		return fmt.Errorf("market deposit failed: %v", err)
-	}
-	if err := m.runtimer.deposit(ctx, d); err != nil {
-		return fmt.Errorf("market deposit failed: %v", err)
-	}
+type DepositReq struct {
+	ID            uuid.UUID
+	DepositStatus DepositStatus
+	Time          time.Time
+}
+
+func (m *Market) Deposit(_ context.Context, dr *DepositReq) error {
+	dr.Time = time.Now()
+	m.ch <- dr
+	log.Printf("[INFO] deposit request registered, id: %s\n", dr.ID.String())
 	return nil
 }
 
-var ErrTransactionNotVerified = errors.New("not verified transaction")
+var ErrVerifyTransaction = errors.New("[ERROR] verify transaction")
 
-func (m *Market) Deposit(ctx context.Context, id uuid.UUID, ds DepositStatus) error {
-	if ds == ERROR {
-		if err := m.persistor.deleteDeal(ctx, id); err != nil {
-			return fmt.Errorf("deposit failed: %v", err)
+func (m *Market) verifyTransaction() {
+	for dr := range m.ch {
+		if dr.Time.Add(time.Minute).After(time.Now()) {
+			m.ch <- dr
+			continue
 		}
-		return nil
+		ctx := context.TODO()
+
+		if dr.DepositStatus == ERROR {
+			if err := m.persistor.deleteDeal(ctx, dr.ID); err != nil {
+				log.Printf("%v, id: %s: err delete unsigned transaction: %v\n", ErrVerifyTransaction, dr.ID.String(), err)
+			}
+
+			continue
+		}
+
+		userRawAddress, err := m.persistor.getUserAddressByPendingDealID(ctx, dr.ID)
+		if err != nil {
+			log.Printf("%v, id: %s: %v\n", ErrVerifyTransaction, dr.ID.String(), err)
+			continue
+		}
+		accountID, err := ton.ParseAccountID(userRawAddress)
+		if err != nil {
+			log.Printf("%v, id: %s: can't parse address: %s: %v\n", ErrVerifyTransaction, dr.ID.String(), userRawAddress, err)
+			continue
+		}
+
+		getLastTransactions := func() ([]ton.Transaction, error) {
+			for i := 0; i < 5; i++ {
+				l, err := m.client.GetLastTransactions(ctx, accountID, 5)
+				if err != nil {
+					time.Sleep(5 * time.Second)
+					continue
+				}
+				return l, nil
+			}
+			return nil, fmt.Errorf("transaction not found: %v", err)
+		}
+
+		trxList, err := getLastTransactions()
+
+		for _, trx := range trxList {
+			var t wallet.TextComment
+			if err := tlb.Unmarshal((*boc.Cell)(&trx.Msgs.OutMsgs.Values()[0].Value.Body.Value), &t); err != nil {
+				log.Printf("[WARNING] verify transaction, id: %s, user_raw_address: %s, can't unmarshal boc: %v\n", dr.ID.String(), userRawAddress, err)
+				continue
+			}
+
+			idStr := wallet.TextComment(dr.ID.String())
+
+			if t == idStr {
+				deal, err := m.persistor.verifyDealAndGet(ctx, dr.ID)
+				if err != nil {
+					log.Printf("%v, id: %s: user_raw_address: %s: %v\n", ErrVerifyTransaction, dr.ID.String(), userRawAddress, err)
+					continue
+				}
+
+				if err := m.runtimer.deposit(ctx, deal); err != nil {
+					log.Printf("%v, id: %s: user_raw_address: %s: %v\n", ErrVerifyTransaction, dr.ID.String(), userRawAddress, err)
+				}
+
+				continue
+			}
+		}
+
+		log.Printf("%v, id: %s: user_raw_address: %s: transaction with deal id wasn't found\n", ErrVerifyTransaction, dr.ID.String(), userRawAddress)
 	}
-
-	accountId := ton.MustParseAccountID(BANK_ADDR)
-
-	trxList, err := m.client.GetLastTransactions(ctx, accountId, 1)
-	if err != nil {
-		return fmt.Errorf("deposit failed: %v", err)
-	}
-
-	trx := trxList[0]
-
-	var t wallet.TextComment
-	if err := tlb.Unmarshal((*boc.Cell)(&trx.Msgs.InMsg.Value.Value.Body.Value), &t); err != nil {
-		return fmt.Errorf("deposit failed: %v", err)
-	}
-
-	idStr := wallet.TextComment(id.String())
-
-	if t == idStr {
-		return m.persistor.verifyDeal(ctx, id)
-	}
-
-	return ErrTransactionNotVerified
 }

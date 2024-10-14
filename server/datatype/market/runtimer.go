@@ -50,11 +50,11 @@ func (r *runtimer) deposit(_ context.Context, d *Deal) error {
 	r.RLock()
 	defer r.RUnlock()
 
-	if _, ok := r.eventRuntimeMap[d.ID]; !ok {
-		return fmt.Errorf("runtimer deposit failed: %v: id: %s", ErrRuntimeEventNotExist, d.ID.String())
+	if _, ok := r.eventRuntimeMap[d.EventID]; !ok {
+		return fmt.Errorf("runtimer deposit failed: %v: id: %s", ErrRuntimeEventNotExist, d.EventID.String())
 	}
 
-	r.eventRuntimeMap[d.ID].deposit(d.Token, d.Collateral)
+	r.eventRuntimeMap[d.EventID].deposit(d.Token, d.Collateral)
 	return nil
 }
 

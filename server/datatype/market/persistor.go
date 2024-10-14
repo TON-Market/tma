@@ -7,6 +7,7 @@ import (
 	"github.com/TON-Market/tma/server/db"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/tonkeeper/tongo/tlb"
 	"strconv"
 	"sync"
 )
@@ -90,14 +91,69 @@ func (p *persistor) saveDeal(ctx context.Context, d *Deal) error {
 	return nil
 }
 
-func (p *persistor) verifyDeal(ctx context.Context, id uuid.UUID) error {
-	q := `UPDATE public.deals SET deal_status = 1 WHERE id = $1`
+var ErrVerifyDealAndGet = errors.New("verify deal and get failed")
 
-	if _, err := p.pool.Exec(ctx, q, id); err != nil {
-		return fmt.Errorf("verify deal failed: %v", err)
+func (p *persistor) verifyDealAndGet(ctx context.Context, id uuid.UUID) (*Deal, error) {
+	tx, err := p.pool.Begin(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("%v: %v: %v", ErrVerifyDealAndGet, db.ErrOpenTransaction, err)
 	}
 
-	return nil
+	defer tx.Rollback(ctx)
+
+	qu := `UPDATE public.deals SET deal_status = 1 WHERE id = $1`
+	qg := `SELECT id, event_id, token, collateral, size, user_raw_addr, deal_status
+           FROM deals WHERE id = $1`
+
+	if _, err := tx.Exec(ctx, qu, id); err != nil {
+		return nil, fmt.Errorf("%v: %v: %v", ErrVerifyDealAndGet, db.ErrTransactionFailed, err)
+	}
+
+	var deal Deal
+	if err := tx.QueryRow(ctx, qg, id).Scan(&deal.ID, &deal.EventID, &deal.Token, &deal.Collateral, &deal.Size, &deal.UserRawAddr, &deal.DealStatus); err != nil {
+		return nil, fmt.Errorf("%v: %v: %v", ErrVerifyDealAndGet, db.ErrTransactionFailed, err)
+	}
+
+	if err := tx.Commit(ctx); err != nil {
+		return nil, fmt.Errorf("%v: %v: %v", ErrVerifyDealAndGet, db.ErrCommitTransaction, err)
+	}
+
+	return &deal, nil
+}
+
+var ErrGetPendingDeals = errors.New("get pending deals failed")
+
+func (p *persistor) getPendingDeals(ctx context.Context) ([]*Deal, error) {
+	dealList := make([]*Deal, 0)
+
+	q := `SELECT id, event_id, token, collateral, size, user_raw_addr, deal_status
+		  FROM deals WHERE deal_status = $1`
+
+	rows, err := p.pool.Query(ctx, q, PENDING)
+	if err != nil {
+		return nil, fmt.Errorf("%v: %v", ErrGetPendingDeals, err)
+	}
+
+	defer rows.Close()
+
+	for rows.Next() {
+		var deal Deal
+		var collateral string
+
+		if err := rows.Scan(&deal.ID, &deal.EventID, &deal.UserRawAddr, &deal.Token, &collateral, &deal.Size, &deal.DealStatus); err != nil {
+			return nil, fmt.Errorf("%v: %v", ErrGetPendingDeals, err)
+		}
+
+		grams, err := strconv.ParseUint(collateral, 10, 64)
+		if err != nil {
+			return nil, fmt.Errorf("%v: parse collateral failed: %v", ErrGetPendingDeals, err)
+		}
+
+		deal.Collateral = tlb.Grams(grams)
+		dealList = append(dealList, &deal)
+	}
+
+	return dealList, nil
 }
 
 func (p *persistor) deleteDeal(ctx context.Context, id uuid.UUID) error {
@@ -108,4 +164,16 @@ func (p *persistor) deleteDeal(ctx context.Context, id uuid.UUID) error {
 	}
 
 	return nil
+}
+
+func (p *persistor) getUserAddressByPendingDealID(ctx context.Context, id uuid.UUID) (string, error) {
+	q := `SELECT user_raw_addr FROM deals WHERE id = $1`
+
+	var userRawAddr string
+
+	if err := p.pool.QueryRow(ctx, q, id).Scan(&userRawAddr); err != nil {
+		return "", fmt.Errorf("select user_raw_address with deal id: %s falied: %v", id.String(), err)
+	}
+
+	return userRawAddr, nil
 }

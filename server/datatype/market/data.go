@@ -12,6 +12,7 @@ type DepositStatus int
 const (
 	OK DepositStatus = iota
 	ERROR
+	PENDING
 )
 
 type Tag int
