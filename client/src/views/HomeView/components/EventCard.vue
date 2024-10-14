@@ -28,11 +28,14 @@ const { event } = defineProps<{
 					<span>{{ bet.title }}</span>
 					<div class="controls">
 						<span>{{ bet.percentage }}%</span>
-						<SelectCount />
+						<SelectCount
+							:eventID="event.id"
+							:token="bet.token"
+						/>
 						<v-btn
 							disabled
 							text="Sell"
-						></v-btn>
+						/>
 					</div>
 				</div>
 			</div>

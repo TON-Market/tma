@@ -6,6 +6,7 @@ export interface Bet {
 	collateral: number;
 	title: string;
 	percentage: number;
+	token: string;
 }
 
 export interface Event {

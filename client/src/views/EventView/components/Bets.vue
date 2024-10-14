@@ -33,9 +33,15 @@ import SelectCount from '@/components/popups/SelectCount.vue';
 				></div>
 			</div>
 			<div class="controls">
-				<SelectCount />
+				<SelectCount
+					eventID="TEST"
+					token="TEST"
+				/>
 				<Collateral :value="153" />
-				<SelectCount />
+				<SelectCount
+					eventID="TEST"
+					token="TEST"
+				/>
 			</div>
 		</template>
 	</Card>
