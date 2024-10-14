@@ -9,16 +9,28 @@ const [TonConnectUI] = useTonConnectUI();
 const modal = useTonConnectModal();
 const account = useAccount();
 
+const tons = ref(1);
+
+const { eventID, token } = defineProps<{
+	eventID: string;
+	token: string;
+}>();
+
 async function pay() {
+	console.log({
+		collateral: tons.value,
+		eventID,
+		token,
+	});
 	if (!TonConnectUI.connected) {
 		modal.open();
 		return;
 	}
 	try {
 		const info = await account.getPaymentInfo({
-			collateral: 0.001,
-			eventID: crypto.randomUUID(),
-			token: 'A',
+			collateral: tons.value,
+			eventID,
+			token,
 		});
 
 		const data = await TonConnectUI.sendTransaction({
@@ -40,8 +52,6 @@ async function pay() {
 		// }
 	}
 }
-
-const tons = ref(1);
 </script>
 
 <template>
@@ -51,7 +61,7 @@ const tons = ref(1);
 				v-bind="activatorProps"
 				text="Buy"
 				variant="flat"
-			></v-btn>
+			/>
 		</template>
 
 		<template v-slot:default="{ isActive }">
@@ -77,11 +87,11 @@ const tons = ref(1);
 								isActive.value = false;
 							}
 						"
-					></v-btn>
+					/>
 					<v-btn
 						text="Cancel"
 						@click="isActive.value = false"
-					></v-btn>
+					/>
 				</v-card-actions>
 			</v-card>
 		</template>
