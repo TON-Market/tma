@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"github.com/TON-Market/tma/server/datatype/market"
 	"github.com/TON-Market/tma/server/datatype/token"
+	"github.com/TON-Market/tma/server/utils"
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 	log "github.com/sirupsen/logrus"
@@ -58,7 +59,7 @@ func (h *handler) Pay(c echo.Context) error {
 	if err != nil {
 		return c.JSON(HttpResErrorWithLog(err.Error(), http.StatusBadRequest, lg))
 	}
-	grams := FloatToGrams(payReq.Collateral)
+	grams := utils.FloatToGrams(payReq.Collateral)
 
 	d := &market.Deal{
 		ID:          dealId,
@@ -66,7 +67,7 @@ func (h *handler) Pay(c echo.Context) error {
 		Token:       payReq.Token,
 		Collateral:  grams,
 		UserRawAddr: addr,
-		Size:        0,
+		Size:        grams,
 	}
 
 	if err := market.GetMarket().SaveDealUnchecked(ctx, d); err != nil {
@@ -83,7 +84,7 @@ func (h *handler) Pay(c echo.Context) error {
 		return c.JSON(HttpResErrorWithLog(err.Error(), http.StatusInternalServerError, lg))
 	}
 
-	gramsStr := GramsToString(grams)
+	gramsStr := utils.GramsToString(grams)
 
 	payResp := &PayResp{
 		Message: &Message{

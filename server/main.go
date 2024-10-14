@@ -6,7 +6,6 @@ import (
 	"github.com/TON-Market/tma/server/config"
 	"github.com/TON-Market/tma/server/datatype/market"
 	"github.com/TON-Market/tma/server/datatype/token"
-	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	log "github.com/sirupsen/logrus"
@@ -61,18 +60,6 @@ func main() {
 	//testDb()
 
 	log.Fatal(e.Start(fmt.Sprintf(":%v", config.Config.Port)))
-}
-
-func testDb() {
-	d := &market.Deal{
-		ID:          uuid.New(),
-		EventID:     uuid.New(),
-		UserRawAddr: "999",
-		Token:       token.A,
-	}
-	if err := market.GetMarket().SaveDealUnchecked(context.Background(), d); err != nil {
-		log.Fatalln(err)
-	}
 }
 
 func testData() {

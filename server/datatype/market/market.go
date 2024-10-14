@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/TON-Market/tma/server/db"
+	"github.com/TON-Market/tma/server/utils"
 	"github.com/google/uuid"
 	log "github.com/sirupsen/logrus"
 	"github.com/tonkeeper/tongo/boc"
@@ -15,7 +16,6 @@ import (
 	"math"
 	"slices"
 	"sort"
-	"strconv"
 	"sync"
 	"time"
 )
@@ -110,6 +110,25 @@ func (m *Market) ReadFromSnapshot(_ context.Context, tag Tag, page int) ([]Event
 	return r[start:end], totalPages, nil
 }
 
+func (m *Market) GetUserAssets(ctx context.Context, addr string) ([]*AssetDTO, error) {
+	assetList, err := m.persistor.getUserAssets(ctx, addr)
+	if err != nil {
+		return nil, fmt.Errorf("market get user assets failed: %v", err)
+	}
+
+	assetDtoList := make([]*AssetDTO, 0, len(assetList))
+	for _, asset := range assetList {
+		assetDtoList = append(assetDtoList, &AssetDTO{
+			EventTitle:       asset.EventTitle,
+			Token:            asset.Token,
+			CollateralStaked: utils.GramsToStringInFloat(asset.CollateralStaked),
+			Size:             utils.GramsToStringInFloat(asset.Size),
+		})
+	}
+
+	return assetDtoList, nil
+}
+
 func (m *Market) makeSnapshot(ctx context.Context) error {
 	list := make([]EventDTO, 0, len(m.snapshot.list))
 	eventStates := m.runtimer.snapshot(ctx)
@@ -128,8 +147,7 @@ func (m *Market) makeSnapshot(ctx context.Context) error {
 
 		betDTOList := m.snapshotBets(ctx, event, state)
 
-		collateral := strconv.FormatUint(uint64(state.collateral), 10)
-
+		collateral := utils.GramsToStringInFloat(state.collateral)
 		eventDTO := EventDTO{
 			ID:              id,
 			Tag:             event.Tag,

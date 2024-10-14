@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/TON-Market/tma/server/db"
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/tonkeeper/tongo/tlb"
 	"strconv"
@@ -101,7 +102,17 @@ func (p *persistor) verifyDealAndGet(ctx context.Context, id uuid.UUID) (*Deal, 
 
 	defer tx.Rollback(ctx)
 
+	qa := `INSERT INTO assets (user_raw_address, event_id, collateral_staked, token, size, event_title)
+           VALUES ($1, $2, $3, $4, $5, $6)`
+
+	qap := `UPDATE assets SET collateral_staked = $1, size = $2
+            WHERE user_raw_address = $3 AND event_id = $4 AND token = $5`
+
+	qag := `SELECT user_raw_address, event_id, collateral_staked, token, size, event_title
+            FROM assets WHERE user_raw_address = $1 AND event_id = $2 AND token = $3`
+
 	qu := `UPDATE public.deals SET deal_status = 1 WHERE id = $1`
+
 	qg := `SELECT id, event_id, token, collateral, size, user_raw_addr, deal_status
            FROM deals WHERE id = $1`
 
@@ -112,6 +123,30 @@ func (p *persistor) verifyDealAndGet(ctx context.Context, id uuid.UUID) (*Deal, 
 	var deal Deal
 	if err := tx.QueryRow(ctx, qg, id).Scan(&deal.ID, &deal.EventID, &deal.Token, &deal.Collateral, &deal.Size, &deal.UserRawAddr, &deal.DealStatus); err != nil {
 		return nil, fmt.Errorf("%v: %v: %v", ErrVerifyDealAndGet, db.ErrTransactionFailed, err)
+	}
+
+	var asset Asset
+	err = tx.QueryRow(ctx, qag, deal.UserRawAddr, deal.EventID, deal.Token).Scan(&asset.UserRawAddress, &asset.EventID, &asset.CollateralStaked, &asset.Token, &asset.Size, &asset.EventTitle)
+	if err != nil && !errors.Is(err, pgx.ErrNoRows) {
+		return nil, fmt.Errorf("%v: get existing asset: %v: %v", ErrVerifyDealAndGet, db.ErrTransactionFailed, err)
+	}
+
+	asset.UserRawAddress = deal.UserRawAddr
+	asset.EventID = deal.EventID
+	asset.Token = deal.Token
+	asset.CollateralStaked += deal.Collateral
+	asset.Size += deal.Size
+
+	if err != nil && errors.Is(err, pgx.ErrNoRows) {
+		if _, err := tx.Exec(ctx, qa, asset.UserRawAddress, asset.EventID, asset.CollateralStaked, asset.Token, asset.Size, asset.EventTitle); err != nil {
+			return nil, fmt.Errorf("%v: saving asset: %v: %v", ErrVerifyDealAndGet, db.ErrTransactionFailed, err)
+		}
+	}
+
+	if err == nil {
+		if _, err := tx.Exec(ctx, qap, asset.CollateralStaked, asset.Size, asset.UserRawAddress, asset.EventID, asset.Token); err != nil {
+			return nil, fmt.Errorf("%v: updating asset: %v: %v", ErrVerifyDealAndGet, db.ErrTransactionFailed, err)
+		}
 	}
 
 	if err := tx.Commit(ctx); err != nil {
@@ -176,4 +211,30 @@ func (p *persistor) getUserAddressByPendingDealID(ctx context.Context, id uuid.U
 	}
 
 	return userRawAddr, nil
+}
+
+func (p *persistor) getUserAssets(ctx context.Context, addr string) ([]*Asset, error) {
+	q := `SELECT user_raw_address, event_id, collateral_staked, token, size, event_title
+          FROM assets WHERE user_raw_address = $1`
+
+	assetList := make([]*Asset, 0)
+
+	rows, err := p.pool.Query(ctx, q, addr)
+	if err != nil {
+		return nil, fmt.Errorf("get user assets from db failed: %v", err)
+	}
+
+	defer rows.Close()
+
+	for rows.Next() {
+		var asset Asset
+
+		if err = rows.Scan(&asset.UserRawAddress, &asset.EventID, &asset.CollateralStaked, &asset.Token, &asset.Size, &asset.EventTitle); err != nil {
+			return nil, fmt.Errorf("get user assets from db failed: %v", err)
+		}
+
+		assetList = append(assetList, &asset)
+	}
+
+	return assetList, nil
 }

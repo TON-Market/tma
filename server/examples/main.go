@@ -1,17 +1,5 @@
 package main
 
-import (
-	"context"
-	"fmt"
-	"github.com/google/uuid"
-	log "github.com/sirupsen/logrus"
-	"github.com/tonkeeper/tongo/boc"
-	"github.com/tonkeeper/tongo/liteapi"
-	"github.com/tonkeeper/tongo/tlb"
-	"github.com/tonkeeper/tongo/ton"
-	"github.com/tonkeeper/tongo/wallet"
-)
-
 //func main() {
 //tongoClient, err := liteapi.NewClientWithDefaultMainnet()
 //if err != nil {
@@ -60,75 +48,75 @@ import (
 //fmt.Printf("Account status: %v\nBalance: %v\n", state.Account.Status(), state.Account.Account.Storage.Balance.Grams)
 //}
 
-const SEED = "example consider fiscal mail guitar tiger duck exhibit ancient series differ wealth mix kitchen cactus upgrade unable yellow impact confirm denial mesh during dove"
-const my_ton_keeper_addr = "UQBbRSVWRlRH0D_OJ2pzj_Kaoeo5_Q3F-6GhDayX044Xr1fU"
+//const SEED = "example consider fiscal mail guitar tiger duck exhibit ancient series differ wealth mix kitchen cactus upgrade unable yellow impact confirm denial mesh during dove"
+//const my_ton_keeper_addr = "UQBbRSVWRlRH0D_OJ2pzj_Kaoeo5_Q3F-6GhDayX044Xr1fU"
+//
+//func a() {
+//	ctx := context.Background()
+//
+//	client, err := liteapi.NewClientWithDefaultMainnet()
+//	if err != nil {
+//		log.Fatalf("Unable to create lite client: %v", err)
+//	}
+//
+//	pk, err := wallet.SeedToPrivateKey(SEED)
+//	if err != nil {
+//		log.Fatalln(err.Error())
+//	}
+//
+//	w, err := wallet.New(pk, wallet.HighLoadV2R2, client)
+//	if err != nil {
+//		log.Fatalln(err)
+//	}
+//
+//	recepient, err := ton.AccountIDFromBase64Url(my_ton_keeper_addr)
+//	if err != nil {
+//		log.Fatalln(err)
+//	}
+//
+//	m := wallet.SimpleTransfer{
+//		Amount:     10000,
+//		Address:    recepient,
+//		Comment:    uuid.NewString(),
+//		Bounceable: false,
+//	}
+//
+//	err = w.Send(ctx, m)
+//	if err != nil {
+//		log.Fatalln(err)
+//	}
+//
+//	body := boc.NewCell()
+//	_ = tlb.Marshal(body, wallet.TextComment(uuid.NewString()))
+//
+//}
 
-func a() {
-	ctx := context.Background()
-
-	client, err := liteapi.NewClientWithDefaultMainnet()
-	if err != nil {
-		log.Fatalf("Unable to create lite client: %v", err)
-	}
-
-	pk, err := wallet.SeedToPrivateKey(SEED)
-	if err != nil {
-		log.Fatalln(err.Error())
-	}
-
-	w, err := wallet.New(pk, wallet.HighLoadV2R2, client)
-	if err != nil {
-		log.Fatalln(err)
-	}
-
-	recepient, err := ton.AccountIDFromBase64Url(my_ton_keeper_addr)
-	if err != nil {
-		log.Fatalln(err)
-	}
-
-	m := wallet.SimpleTransfer{
-		Amount:     10000,
-		Address:    recepient,
-		Comment:    uuid.NewString(),
-		Bounceable: false,
-	}
-
-	err = w.Send(ctx, m)
-	if err != nil {
-		log.Fatalln(err)
-	}
-
-	body := boc.NewCell()
-	_ = tlb.Marshal(body, wallet.TextComment(uuid.NewString()))
-
-}
-
-func main() {
-	tongoClient, err := liteapi.NewClientWithDefaultMainnet()
-	if err != nil {
-		fmt.Printf("Unable to create tongo client: %v", err)
-	}
-
-	//accountId := ton.MustParseAccountID("0:5b452556465447d03fce276a738ff29aa1ea39fd0dc5fba1a10dac97d38e17af")
-
-	//accountId, err := ton.AccountIDFromRaw("0:5b452556465447d03fce276a738ff29aa1ea39fd0dc5fba1a10dac97d38e17af")
-	//if err != nil {
-	//	log.Fatalln(err)
-	//}
-
-	accountId := ton.MustParseAccountID("0:5b452556465447d03fce276a738ff29aa1ea39fd0dc5fba1a10dac97d38e17af")
-
-	trxs, err := tongoClient.GetLastTransactions(context.Background(), accountId, 100)
-	if err != nil {
-		log.Fatalln(err)
-	}
-
-	trx := trxs[0]
-
-	var t wallet.TextComment
-	if err := tlb.Unmarshal((*boc.Cell)(&trx.Msgs.OutMsgs.Values()[0].Value.Body.Value), &t); err != nil {
-		log.Fatalln(err)
-	}
-
-	fmt.Println(t)
-}
+//func main() {
+//	tongoClient, err := liteapi.NewClientWithDefaultMainnet()
+//	if err != nil {
+//		fmt.Printf("Unable to create tongo client: %v", err)
+//	}
+//
+//	//accountId := ton.MustParseAccountID("0:5b452556465447d03fce276a738ff29aa1ea39fd0dc5fba1a10dac97d38e17af")
+//
+//	//accountId, err := ton.AccountIDFromRaw("0:5b452556465447d03fce276a738ff29aa1ea39fd0dc5fba1a10dac97d38e17af")
+//	//if err != nil {
+//	//	log.Fatalln(err)
+//	//}
+//
+//	accountId := ton.MustParseAccountID("0:5b452556465447d03fce276a738ff29aa1ea39fd0dc5fba1a10dac97d38e17af")
+//
+//	trxs, err := tongoClient.GetLastTransactions(context.Background(), accountId, 100)
+//	if err != nil {
+//		log.Fatalln(err)
+//	}
+//
+//	trx := trxs[0]
+//
+//	var t wallet.TextComment
+//	if err := tlb.Unmarshal((*boc.Cell)(&trx.Msgs.OutMsgs.Values()[0].Value.Body.Value), &t); err != nil {
+//		log.Fatalln(err)
+//	}
+//
+//	fmt.Println(t)
+//}

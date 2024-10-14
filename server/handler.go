@@ -260,3 +260,17 @@ func (h *handler) GetTags(c echo.Context) error {
 
 	return c.JSON(http.StatusOK, tagList)
 }
+
+func (h *handler) GetAssets(c echo.Context) error {
+	ctx := context.TODO()
+	lg := log.WithContext(ctx).WithField("prefix", "GetAssets")
+
+	addr := c.Get("address").(string)
+
+	list, err := market.GetMarket().GetUserAssets(ctx, addr)
+	if err != nil {
+		return c.JSON(HttpResErrorWithLog(err.Error(), http.StatusInternalServerError, lg))
+	}
+
+	return c.JSON(http.StatusOK, list)
+}

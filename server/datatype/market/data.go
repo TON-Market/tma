@@ -26,6 +26,22 @@ const (
 	No
 )
 
+type AssetDTO struct {
+	EventTitle       string      `json:"eventTitle"`
+	Token            token.Token `json:"token"`
+	CollateralStaked string      `json:"collateralStaked"`
+	Size             string      `json:"size"`
+}
+
+type Asset struct {
+	UserRawAddress   string
+	EventTitle       string
+	EventID          uuid.UUID
+	CollateralStaked tlb.Grams
+	Token            token.Token
+	Size             tlb.Grams
+}
+
 type BetDTO struct {
 	Token      token.Token `json:"token"`
 	Title      string      `json:"title"`
@@ -56,7 +72,7 @@ type Deal struct {
 	UserRawAddr string
 	token.Token
 	Collateral tlb.Grams
-	Size       float64
+	Size       tlb.Grams
 	DealStatus DealStatus
 }
 
