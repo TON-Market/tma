@@ -13,7 +13,6 @@ type DepositStatus int
 const (
 	OK DepositStatus = iota
 	ERROR
-	PENDING
 )
 
 type Tag int
@@ -36,12 +35,10 @@ type AssetDTO struct {
 
 type Asset struct {
 	UserRawAddress   string
-	EventTitle       string
 	EventID          uuid.UUID
 	CollateralStaked tlb.Grams
 	Token            token.Token
 	Size             tlb.Grams
-	TokenTitle       string
 }
 
 type BetDTO struct {

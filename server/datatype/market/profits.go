@@ -16,7 +16,7 @@ func (m *Market) CloseEvent(ctx context.Context, id uuid.UUID, winToken token.To
 	if err := m.runtimer.close(ctx, id); err != nil {
 		return fmt.Errorf("close event failed: %w", err)
 	}
-	time.Sleep(1 * time.Minute)
+	time.Sleep(5 * time.Minute)
 	userTotalReturnMap, err := m.calcUsersProfit(ctx, id, winToken)
 	if err != nil {
 		return fmt.Errorf("close event failed: %w", err)
@@ -25,15 +25,19 @@ func (m *Market) CloseEvent(ctx context.Context, id uuid.UUID, winToken token.To
 	if err = m.profitUsers(ctx, userTotalReturnMap, id); err != nil {
 		return fmt.Errorf("close event failed: %w", err)
 	}
+
+	if err = m.persistor.deleteAssets(ctx, id); err != nil {
+		return fmt.Errorf("delete assets failed: %w", err)
+	}
 	return nil
 }
 
 type UserTotalReturnMap map[string]tlb.Grams
 
-var baseFee = tlb.Grams(5000000)
+var baseFee = tlb.Grams(7000000)
 
 func (m *Market) calcUsersProfit(ctx context.Context, id uuid.UUID, winToken token.Token) (UserTotalReturnMap, error) {
-	assetList, err := m.persistor.getAssets(ctx, id)
+	assetList, err := m.persistor.getEventAssets(ctx, id)
 	if err != nil {
 		return nil, fmt.Errorf("calc users profit failed: %w", err)
 	}

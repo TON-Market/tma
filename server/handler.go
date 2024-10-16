@@ -8,8 +8,6 @@ import (
 	"github.com/TON-Market/tma/server/datatype"
 	"github.com/TON-Market/tma/server/datatype/market"
 	"github.com/TON-Market/tma/server/datatype/user"
-	"github.com/TON-Market/tma/server/utils"
-	"github.com/tonkeeper/tongo/tlb"
 	"io"
 	"net/http"
 	"strconv"
@@ -253,27 +251,14 @@ func (h *handler) GetAssets(c echo.Context) error {
 
 	addr := c.Get("address").(string)
 
-	assetList, err := market.GetMarket().GetUserAssets(ctx, addr)
+	assetDtoList, totalInMarket, err := market.GetMarket().GetUserAssets(ctx, addr)
 	if err != nil {
 		return c.JSON(HttpResErrorWithLog(err.Error(), http.StatusInternalServerError, lg))
 	}
 
-	totalInMarket := tlb.Grams(0)
-
-	assetDtoList := make([]*market.AssetDTO, 0, len(assetList))
-	for _, asset := range assetList {
-		totalInMarket += asset.CollateralStaked
-		assetDtoList = append(assetDtoList, &market.AssetDTO{
-			EventTitle:       asset.EventTitle,
-			BetTitle:         asset.TokenTitle,
-			CollateralStaked: utils.GramsToStringInFloat(asset.CollateralStaked),
-			Size:             utils.GramsToStringInFloat(asset.Size),
-		})
-	}
-
 	resp := &GetAssetsResp{
 		AssetList:     assetDtoList,
-		TotalInMarket: utils.GramsToStringInFloat(totalInMarket),
+		TotalInMarket: totalInMarket,
 	}
 
 	return c.JSON(http.StatusOK, resp)

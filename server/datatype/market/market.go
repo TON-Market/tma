@@ -118,13 +118,33 @@ func (m *Market) ReadFromSnapshot(_ context.Context, tag Tag, page int) ([]Event
 	return r[start:end], totalPages, nil
 }
 
-func (m *Market) GetUserAssets(ctx context.Context, addr string) ([]*Asset, error) {
+func (m *Market) GetUserAssets(ctx context.Context, addr string) ([]*AssetDTO, string, error) {
 	assetList, err := m.persistor.getUserAssets(ctx, addr)
 	if err != nil {
-		return nil, fmt.Errorf("market get user assets failed: %v", err)
+		return nil, "", fmt.Errorf("market get user assets failed: %w", err)
 	}
 
-	return assetList, nil
+	assetDtoList := make([]*AssetDTO, 0, len(assetList))
+	totalInMarket := tlb.Grams(0)
+
+	for _, asset := range assetList {
+		totalInMarket += asset.CollateralStaked
+
+		eventCopy, err := m.persistor.getCopyByID(ctx, asset.EventID)
+		if err != nil {
+			return nil, "", fmt.Errorf("market get user assets failed: %w", err)
+		}
+
+		assetDto := &AssetDTO{
+			EventTitle:       eventCopy.Title,
+			BetTitle:         eventCopy.BetMap[asset.Token].Title,
+			CollateralStaked: utils.GramsToStringInFloat(asset.CollateralStaked),
+			Size:             utils.GramsToStringInFloat(asset.Size),
+		}
+
+		assetDtoList = append(assetDtoList, assetDto)
+	}
+	return assetDtoList, utils.GramsToStringInFloat(totalInMarket), nil
 }
 
 func (m *Market) makeSnapshot(ctx context.Context) error {
@@ -262,7 +282,7 @@ func (m *Market) verifyIncomeTransactions() {
 			continue
 		}
 
-		userRawAddress, err := m.persistor.getUserAddressByPendingDealID(ctx, dr.ID)
+		userRawAddress, err := m.persistor.getUserAddressByUncheckedDealID(ctx, dr.ID)
 		if err != nil {
 			log.Printf("%v, id: %s: %v\n", ErrVerifyTransaction, dr.ID.String(), err)
 			continue
