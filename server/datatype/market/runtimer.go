@@ -29,6 +29,7 @@ func (r *runtimer) saveEvent(_ context.Context, e *Event) error {
 	}
 
 	er := &eventRuntime{
+		isActive:      true,
 		eventID:       e.ID,
 		betRuntimeMap: make(map[token.Token]*betRuntime),
 	}

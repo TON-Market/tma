@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"github.com/TON-Market/tma/server/datatype/token"
-	"github.com/TON-Market/tma/server/utils"
 	"github.com/google/uuid"
 	log "github.com/sirupsen/logrus"
 	"github.com/tonkeeper/tongo/tlb"
@@ -17,7 +16,7 @@ func (m *Market) CloseEvent(ctx context.Context, id uuid.UUID, winToken token.To
 	if err := m.runtimer.close(ctx, id); err != nil {
 		return fmt.Errorf("close event failed: %w", err)
 	}
-	time.Sleep(5 * time.Minute)
+	time.Sleep(1 * time.Minute)
 	userTotalReturnMap, err := m.calcUsersProfit(ctx, id, winToken)
 	if err != nil {
 		return fmt.Errorf("close event failed: %w", err)
@@ -30,6 +29,8 @@ func (m *Market) CloseEvent(ctx context.Context, id uuid.UUID, winToken token.To
 }
 
 type UserTotalReturnMap map[string]tlb.Grams
+
+var baseFee = tlb.Grams(5000000)
 
 func (m *Market) calcUsersProfit(ctx context.Context, id uuid.UUID, winToken token.Token) (UserTotalReturnMap, error) {
 	assetList, err := m.persistor.getAssets(ctx, id)
@@ -58,7 +59,10 @@ func (m *Market) calcUsersProfit(ctx context.Context, id uuid.UUID, winToken tok
 		rest := float64(asset.CollateralStaked) / float64(winCollateral)
 		profit := rest * float64(loseCollateral)
 		userTotalReturn := profit + float64(asset.CollateralStaked)
-		returnGrams := utils.FloatToGrams(userTotalReturn)
+		returnGrams := tlb.Grams(userTotalReturn) - baseFee
+		if returnGrams < 0 {
+			continue
+		}
 		userTotalReturnMap[asset.UserRawAddress] = returnGrams
 	}
 

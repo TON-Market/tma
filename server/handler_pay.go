@@ -144,10 +144,10 @@ func (h *handler) Close(c echo.Context) error {
 	ctx := context.TODO()
 	lg := log.WithContext(ctx).WithField("prefix", "Close")
 
-	addr := c.Get("address").(string)
-	if addr != OWNER_ADDRESS {
-		return c.JSON(HttpResErrorWithLog("you are not owner", http.StatusUnauthorized, lg))
-	}
+	//addr := c.Get("address").(string)
+	//if addr != OWNER_ADDRESS {
+	//	return c.JSON(HttpResErrorWithLog("you are not owner", http.StatusUnauthorized, lg))
+	//}
 
 	b, err := io.ReadAll(c.Request().Body)
 	if err != nil {

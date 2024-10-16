@@ -69,11 +69,6 @@ func registerHandlers(e *echo.Echo, h *handler, w *socket) {
 	g.POST("/close", h.Close, middleware.CORSWithConfig(middleware.CORSConfig{
 		AllowOrigins: []string{"*"},
 		AllowMethods: []string{echo.POST},
-	}), middleware.KeyAuthWithConfig(middleware.KeyAuthConfig{
-		Skipper:    middleware.DefaultSkipper,
-		KeyLookup:  "cookie:AuthToken",
-		AuthScheme: "Bearer",
-		Validator:  h.validateUser,
 	}))
 
 	e.GET("/ws", w.updateEvent, middleware.CORSWithConfig(
