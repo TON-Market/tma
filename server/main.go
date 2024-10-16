@@ -47,17 +47,13 @@ func main() {
 		tonconnect.WithLifeTimePayload(payloadLifeTime), tonconnect.WithLifeTimeProof(proofLifeTime))
 
 	h := newHandler(tonConnectMainNet, tonConnectTestNet)
-	//w := newSocket()
+	w := newSocket()
 
 	market.GetMarket().Start(context.TODO())
 
-	//registerHandlers(e, h, w)
-
-	registerHandlers(e, h)
+	registerHandlers(e, h, w)
 
 	testData()
-
-	//testDb()
 
 	log.Fatal(e.Start(fmt.Sprintf(":%v", config.Config.Port)))
 }
@@ -66,7 +62,7 @@ func testData() {
 	e := &market.Event{
 		Tag:      market.Politic,
 		LogoLink: "no",
-		Title:    "Will Ton Market win hackathon?????????",
+		Title:    "Will Ton Market win hackathon?",
 		BetMap: map[token.Token]*market.Bet{
 			token.A: {
 				Token: token.A,
@@ -74,7 +70,7 @@ func testData() {
 			},
 			token.B: {
 				Token: token.B,
-				Title: "No",
+				Title: "All",
 			},
 		},
 	}

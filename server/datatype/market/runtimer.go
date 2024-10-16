@@ -55,6 +55,7 @@ func (r *runtimer) deposit(_ context.Context, d *Deal) error {
 	}
 
 	r.eventRuntimeMap[d.EventID].deposit(d.Token, d.Collateral)
+
 	return nil
 }
 
@@ -69,4 +70,24 @@ func (r *runtimer) snapshot(_ context.Context) map[uuid.UUID]*eventState {
 	}
 
 	return m
+}
+
+func (r *runtimer) getEventState(_ context.Context, id uuid.UUID) *eventState {
+	r.RLock()
+	defer r.RUnlock()
+	s := r.eventRuntimeMap[id].getState()
+	return s
+}
+
+func (r *runtimer) close(_ context.Context, id uuid.UUID) error {
+	r.RLock()
+	defer r.RUnlock()
+
+	er, ok := r.eventRuntimeMap[id]
+	if !ok {
+		return fmt.Errorf("runtimer close event: %s failed: %w", id.String(), ErrRuntimeEventNotExist)
+	}
+
+	er.close()
+	return nil
 }

@@ -5,7 +5,7 @@ import (
 	"github.com/labstack/echo/v4/middleware"
 )
 
-func registerHandlers(e *echo.Echo, h *handler) {
+func registerHandlers(e *echo.Echo, h *handler, w *socket) {
 	g := e.Group("/api")
 	g.POST("/generate-payload", h.PayloadHandler, middleware.CORSWithConfig(middleware.CORSConfig{
 		AllowOrigins: []string{"*"},
@@ -14,16 +14,6 @@ func registerHandlers(e *echo.Echo, h *handler) {
 	g.POST("/check-proof", h.ProofHandler, middleware.CORSWithConfig(middleware.CORSConfig{
 		AllowOrigins: []string{"*"},
 		AllowMethods: []string{echo.POST},
-	}))
-	g.Use(middleware.CORS())
-	g.GET("/get-address", h.GetAccountInfo, middleware.CORSWithConfig(middleware.CORSConfig{
-		AllowOrigins: []string{"*"},
-		AllowMethods: []string{echo.GET},
-	}), middleware.KeyAuthWithConfig(middleware.KeyAuthConfig{
-		Skipper:    middleware.DefaultSkipper,
-		KeyLookup:  "cookie:AuthToken",
-		AuthScheme: "Bearer",
-		Validator:  h.validateUser,
 	}))
 
 	g.GET("/get-events", h.GetEvents, middleware.CORSWithConfig(middleware.CORSConfig{
@@ -36,13 +26,6 @@ func registerHandlers(e *echo.Echo, h *handler) {
 		AllowMethods: []string{echo.GET},
 	}))
 
-	//// Test handler
-	//g.GET("/add-deposit", h.AddDeposit, middleware.CORSWithConfig(middleware.CORSConfig{
-	//	AllowOrigins: []string{"*"},
-	//	AllowMethods: []string{echo.GET},
-	//}))
-
-	// Test handler
 	g.POST("/pay", h.Pay, middleware.CORSWithConfig(middleware.CORSConfig{
 		AllowOrigins: []string{"*"},
 		AllowMethods: []string{echo.POST},
@@ -63,9 +46,39 @@ func registerHandlers(e *echo.Echo, h *handler) {
 		Validator:  h.validateUser,
 	}))
 
-	//g.GET("/ws", w.updateEvent, middleware.CORSWithConfig(
-	//	middleware.CORSConfig{
-	//		AllowOrigins: []string{"*"},
-	//		AllowMethods: []string{echo.GET},
-	//	}))
+	g.GET("/assets", h.GetAssets, middleware.CORSWithConfig(middleware.CORSConfig{
+		AllowOrigins: []string{"*"},
+		AllowMethods: []string{echo.GET},
+	}), middleware.KeyAuthWithConfig(middleware.KeyAuthConfig{
+		Skipper:    middleware.DefaultSkipper,
+		KeyLookup:  "cookie:AuthToken",
+		AuthScheme: "Bearer",
+		Validator:  h.validateUser,
+	}))
+
+	g.DELETE("/disconnect", h.Disconnect, middleware.CORSWithConfig(middleware.CORSConfig{
+		AllowOrigins: []string{"*"},
+		AllowMethods: []string{echo.DELETE},
+	}), middleware.KeyAuthWithConfig(middleware.KeyAuthConfig{
+		Skipper:    middleware.DefaultSkipper,
+		KeyLookup:  "cookie:AuthToken",
+		AuthScheme: "Bearer",
+		Validator:  h.validateUser,
+	}))
+
+	g.POST("/close", h.Close, middleware.CORSWithConfig(middleware.CORSConfig{
+		AllowOrigins: []string{"*"},
+		AllowMethods: []string{echo.POST},
+	}), middleware.KeyAuthWithConfig(middleware.KeyAuthConfig{
+		Skipper:    middleware.DefaultSkipper,
+		KeyLookup:  "cookie:AuthToken",
+		AuthScheme: "Bearer",
+		Validator:  h.validateUser,
+	}))
+
+	e.GET("/ws", w.updateEvent, middleware.CORSWithConfig(
+		middleware.CORSConfig{
+			AllowOrigins: []string{"*"},
+			AllowMethods: []string{echo.GET},
+		}))
 }

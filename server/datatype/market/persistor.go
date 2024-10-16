@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/TON-Market/tma/server/datatype/token"
 	"github.com/TON-Market/tma/server/db"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
@@ -102,13 +103,13 @@ func (p *persistor) verifyDealAndGet(ctx context.Context, id uuid.UUID) (*Deal, 
 
 	defer tx.Rollback(ctx)
 
-	qa := `INSERT INTO assets (user_raw_address, event_id, collateral_staked, token, size, event_title)
-           VALUES ($1, $2, $3, $4, $5, $6)`
+	qa := `INSERT INTO assets (user_raw_address, event_id, collateral_staked, token, size, event_title, token_title)
+           VALUES ($1, $2, $3, $4, $5, $6, $7)`
 
 	qap := `UPDATE assets SET collateral_staked = $1, size = $2
             WHERE user_raw_address = $3 AND event_id = $4 AND token = $5`
 
-	qag := `SELECT user_raw_address, event_id, collateral_staked, token, size, event_title
+	qag := `SELECT user_raw_address, event_id, collateral_staked, token, size, event_title, token_title
             FROM assets WHERE user_raw_address = $1 AND event_id = $2 AND token = $3`
 
 	qu := `UPDATE public.deals SET deal_status = 1 WHERE id = $1`
@@ -126,7 +127,8 @@ func (p *persistor) verifyDealAndGet(ctx context.Context, id uuid.UUID) (*Deal, 
 	}
 
 	var asset Asset
-	err = tx.QueryRow(ctx, qag, deal.UserRawAddr, deal.EventID, deal.Token).Scan(&asset.UserRawAddress, &asset.EventID, &asset.CollateralStaked, &asset.Token, &asset.Size, &asset.EventTitle)
+	err = tx.QueryRow(ctx, qag, deal.UserRawAddr, deal.EventID, deal.Token).
+		Scan(&asset.UserRawAddress, &asset.EventID, &asset.CollateralStaked, &asset.Token, &asset.Size, &asset.EventTitle, &asset.TokenTitle)
 	if err != nil && !errors.Is(err, pgx.ErrNoRows) {
 		return nil, fmt.Errorf("%v: get existing asset: %v: %v", ErrVerifyDealAndGet, db.ErrTransactionFailed, err)
 	}
@@ -137,8 +139,16 @@ func (p *persistor) verifyDealAndGet(ctx context.Context, id uuid.UUID) (*Deal, 
 	asset.CollateralStaked += deal.Collateral
 	asset.Size += deal.Size
 
+	eventCopy, rr := p.getCopyByID(ctx, deal.EventID)
+	if rr != nil {
+		return nil, fmt.Errorf("%v: get event copy by ID: %w", ErrVerifyDealAndGet, rr)
+	}
+
+	asset.EventTitle = eventCopy.Title
+	asset.TokenTitle = eventCopy.BetMap[asset.Token].Title
+
 	if err != nil && errors.Is(err, pgx.ErrNoRows) {
-		if _, err := tx.Exec(ctx, qa, asset.UserRawAddress, asset.EventID, asset.CollateralStaked, asset.Token, asset.Size, asset.EventTitle); err != nil {
+		if _, err := tx.Exec(ctx, qa, asset.UserRawAddress, asset.EventID, asset.CollateralStaked, asset.Token, asset.Size, asset.EventTitle, asset.TokenTitle); err != nil {
 			return nil, fmt.Errorf("%v: saving asset: %v: %v", ErrVerifyDealAndGet, db.ErrTransactionFailed, err)
 		}
 	}
@@ -214,7 +224,7 @@ func (p *persistor) getUserAddressByPendingDealID(ctx context.Context, id uuid.U
 }
 
 func (p *persistor) getUserAssets(ctx context.Context, addr string) ([]*Asset, error) {
-	q := `SELECT user_raw_address, event_id, collateral_staked, token, size, event_title
+	q := `SELECT user_raw_address, event_id, collateral_staked, token, size, event_title, token_title
           FROM assets WHERE user_raw_address = $1`
 
 	assetList := make([]*Asset, 0)
@@ -229,7 +239,7 @@ func (p *persistor) getUserAssets(ctx context.Context, addr string) ([]*Asset, e
 	for rows.Next() {
 		var asset Asset
 
-		if err = rows.Scan(&asset.UserRawAddress, &asset.EventID, &asset.CollateralStaked, &asset.Token, &asset.Size, &asset.EventTitle); err != nil {
+		if err = rows.Scan(&asset.UserRawAddress, &asset.EventID, &asset.CollateralStaked, &asset.Token, &asset.Size, &asset.EventTitle, &asset.TokenTitle); err != nil {
 			return nil, fmt.Errorf("get user assets from db failed: %v", err)
 		}
 
@@ -237,4 +247,39 @@ func (p *persistor) getUserAssets(ctx context.Context, addr string) ([]*Asset, e
 	}
 
 	return assetList, nil
+}
+
+func (p *persistor) getAssets(ctx context.Context, id uuid.UUID) ([]*Asset, error) {
+	q := `SELECT user_raw_address, event_id, collateral_staked, token, size, event_title, token_title
+        FROM assets WHERE event_id = $1`
+
+	assetList := make([]*Asset, 0)
+	rows, err := p.pool.Query(ctx, q, id)
+	if err != nil {
+		return nil, fmt.Errorf("get assets failed: %w", err)
+	}
+
+	defer rows.Close()
+
+	for rows.Next() {
+		var asset Asset
+		if err = rows.Scan(&asset.UserRawAddress, &asset.EventID, &asset.CollateralStaked,
+			&asset.Token, &asset.Size, &asset.EventTitle, &asset.TokenTitle); err != nil {
+			return nil, fmt.Errorf("get assets failed: %w", err)
+		}
+
+		assetList = append(assetList, &asset)
+	}
+
+	return assetList, nil
+}
+
+func (p *persistor) deleteAssets(ctx context.Context, id uuid.UUID, token token.Token) error {
+	q := `DELETE FROM assets WHERE event_id = $1 AND token = $2`
+
+	if _, err := p.pool.Exec(ctx, q, id, token); err != nil {
+		return fmt.Errorf("delete assets failed: %w", err)
+	}
+
+	return nil
 }

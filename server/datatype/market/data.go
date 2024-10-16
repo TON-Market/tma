@@ -1,6 +1,7 @@
 package market
 
 import (
+	"errors"
 	"github.com/TON-Market/tma/server/datatype/token"
 	"github.com/google/uuid"
 	"github.com/tonkeeper/tongo/tlb"
@@ -23,14 +24,14 @@ const (
 	Crypto
 	Culture
 	Other
-	No
+	All
 )
 
 type AssetDTO struct {
-	EventTitle       string      `json:"eventTitle"`
-	Token            token.Token `json:"token"`
-	CollateralStaked string      `json:"collateralStaked"`
-	Size             string      `json:"size"`
+	EventTitle       string `json:"eventTitle"`
+	BetTitle         string `json:"betTitle"`
+	CollateralStaked string `json:"collateralStaked"`
+	Size             string `json:"size"`
 }
 
 type Asset struct {
@@ -40,6 +41,7 @@ type Asset struct {
 	CollateralStaked tlb.Grams
 	Token            token.Token
 	Size             tlb.Grams
+	TokenTitle       string
 }
 
 type BetDTO struct {
@@ -117,21 +119,35 @@ func (br *betRuntime) getState() *betState {
 }
 
 type eventState struct {
+	isActive    bool
 	collateral  tlb.Grams
 	betStateMap map[token.Token]*betState
 }
 
 type eventRuntime struct {
+	sync.RWMutex
+	isActive      bool
 	eventID       uuid.UUID
 	betRuntimeMap map[token.Token]*betRuntime
 }
 
+var ErrEventClosed = errors.New("event closed")
+
 func (er *eventRuntime) deposit(t token.Token, g tlb.Grams) {
+	er.RLock()
+	defer er.RUnlock()
+	//if !er.isActive {
+	//	return ErrEventClosed
+	//}
 	er.betRuntimeMap[t].deposit(g)
 }
 
 func (er *eventRuntime) getState() *eventState {
+	er.RLock()
+	defer er.RUnlock()
+
 	es := &eventState{
+		isActive:    er.isActive,
 		betStateMap: make(map[token.Token]*betState),
 	}
 
@@ -146,8 +162,15 @@ func (er *eventRuntime) getState() *eventState {
 			bs.percentage = 0
 			continue
 		}
-		bs.percentage = float64(bs.collateral) / float64(es.collateral)
+		bs.percentage = (float64(bs.collateral) / float64(es.collateral)) * 100
 	}
 
 	return es
+}
+
+func (er *eventRuntime) close() {
+	er.Lock()
+	defer er.Unlock()
+
+	er.isActive = false
 }

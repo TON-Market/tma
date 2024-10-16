@@ -8,6 +8,8 @@ import (
 	"github.com/TON-Market/tma/server/datatype"
 	"github.com/TON-Market/tma/server/datatype/market"
 	"github.com/TON-Market/tma/server/datatype/user"
+	"github.com/TON-Market/tma/server/utils"
+	"github.com/tonkeeper/tongo/tlb"
 	"io"
 	"net/http"
 	"strconv"
@@ -136,40 +138,19 @@ func (h *handler) PayloadHandler(c echo.Context) error {
 	})
 }
 
-func (h *handler) GetAccountInfo(c echo.Context) error {
-	ctx := c.Request().Context()
-	lg := log.WithContext(ctx).WithField("prefix", "getAccountInfo")
+func (h *handler) Disconnect(c echo.Context) error {
+	addr := c.Get("address").(string)
+	log.Printf("[INFO] user: %s disconnected\n", addr)
 
-	cookie, err := c.Cookie("AuthToken")
-	if err != nil {
-		return c.JSON(HttpResErrorWithLog(fmt.Sprintf("can't get cookie: %v", err), http.StatusBadRequest, lg))
-	}
-
-	signedToken := cookie.Value
-
-	jwtToken, err := jwt.ParseWithClaims(signedToken, &jwtCustomClaims{}, func(token *jwt.Token) (interface{}, error) {
-		return []byte(h.tonConnectMainNet.GetSecret()), nil
-	})
-	if err != nil {
-		return c.JSON(HttpResErrorWithLog(fmt.Sprintf("invalid jwtToken: %v", err), http.StatusUnauthorized, lg))
-	}
-
-	if claims, ok := jwtToken.Claims.(*jwtCustomClaims); ok && jwtToken.Valid {
-		if time.Unix(claims.StandardClaims.ExpiresAt, 0).Before(time.Now()) {
-			return c.JSON(HttpResErrorWithLog("jwtToken has expired", http.StatusUnauthorized, lg))
-		}
-
-		net := networks["-239"]
-
-		info, err := getAccountInfo(ctx, claims.Address, net)
-		if err != nil {
-			return c.JSON(HttpResErrorWithLog(fmt.Sprintf("get account info error: %v", err), http.StatusBadRequest, lg))
-		}
-
-		return c.JSON(http.StatusOK, info)
-	} else {
-		return c.JSON(HttpResErrorWithLog("invalid jwtToken claims", http.StatusUnauthorized, lg))
-	}
+	cookie := new(http.Cookie)
+	cookie.Name = "AuthToken"
+	cookie.Value = "null"
+	cookie.Expires = time.Now().Add(-time.Hour)
+	cookie.Path = "/"
+	cookie.HttpOnly = false
+	cookie.Secure = false
+	c.SetCookie(cookie)
+	return c.JSON(http.StatusOK, "ok")
 }
 
 func (h *handler) validateUser(auth string, c echo.Context) (bool, error) {
@@ -232,8 +213,8 @@ type Tag struct {
 func (h *handler) GetTags(c echo.Context) error {
 	tagList := []*Tag{
 		{
-			ID:    market.No,
-			Title: "No",
+			ID:    market.All,
+			Title: "All",
 		},
 		{
 			ID:    market.Politic,
@@ -261,16 +242,39 @@ func (h *handler) GetTags(c echo.Context) error {
 	return c.JSON(http.StatusOK, tagList)
 }
 
+type GetAssetsResp struct {
+	AssetList     []*market.AssetDTO `json:"assetList"`
+	TotalInMarket string             `json:"totalInMarket"`
+}
+
 func (h *handler) GetAssets(c echo.Context) error {
 	ctx := context.TODO()
 	lg := log.WithContext(ctx).WithField("prefix", "GetAssets")
 
 	addr := c.Get("address").(string)
 
-	list, err := market.GetMarket().GetUserAssets(ctx, addr)
+	assetList, err := market.GetMarket().GetUserAssets(ctx, addr)
 	if err != nil {
 		return c.JSON(HttpResErrorWithLog(err.Error(), http.StatusInternalServerError, lg))
 	}
 
-	return c.JSON(http.StatusOK, list)
+	totalInMarket := tlb.Grams(0)
+
+	assetDtoList := make([]*market.AssetDTO, 0, len(assetList))
+	for _, asset := range assetList {
+		totalInMarket += asset.CollateralStaked
+		assetDtoList = append(assetDtoList, &market.AssetDTO{
+			EventTitle:       asset.EventTitle,
+			BetTitle:         asset.TokenTitle,
+			CollateralStaked: utils.GramsToStringInFloat(asset.CollateralStaked),
+			Size:             utils.GramsToStringInFloat(asset.Size),
+		})
+	}
+
+	resp := &GetAssetsResp{
+		AssetList:     assetDtoList,
+		TotalInMarket: utils.GramsToStringInFloat(totalInMarket),
+	}
+
+	return c.JSON(http.StatusOK, resp)
 }

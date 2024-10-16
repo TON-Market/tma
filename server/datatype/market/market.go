@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/TON-Market/tma/server/datatype/token"
 	"github.com/TON-Market/tma/server/db"
 	"github.com/TON-Market/tma/server/utils"
 	"github.com/google/uuid"
@@ -21,6 +22,7 @@ import (
 )
 
 const BANK_ADDR = "EQBRW9rjhRUNL-Sy4swYbMzm2MgvlhC2DWIZFhYp2JnSoJaA"
+const SEED = "example consider fiscal mail guitar tiger duck exhibit ancient series differ wealth mix kitchen cactus upgrade unable yellow impact confirm denial mesh during dove"
 
 type snapshot struct {
 	sync.RWMutex
@@ -28,6 +30,8 @@ type snapshot struct {
 }
 
 type Market struct {
+	wallet    wallet.Wallet
+	WsCh      chan *EventDTO
 	ch        chan *DepositReq
 	client    *liteapi.Client
 	snapshot  *snapshot
@@ -38,6 +42,10 @@ type Market struct {
 var ErrMarketAddEventFailed = errors.New("market add event failed")
 
 func (m *Market) SaveDealUnchecked(ctx context.Context, d *Deal) error {
+	es := m.runtimer.getEventState(ctx, d.EventID)
+	if !es.isActive {
+		return ErrEventClosed
+	}
 	d.DealStatus = Unchecked
 	if err := m.persistor.saveDeal(ctx, d); err != nil {
 		return fmt.Errorf("market save deal unchecked failed: %v", err)
@@ -63,7 +71,7 @@ func (m *Market) Start(ctx context.Context) {
 	ticker := time.NewTicker(5 * time.Second)
 
 	for i := 0; i < 1; i++ {
-		go m.verifyTransaction()
+		go m.verifyIncomeTransactions()
 	}
 
 	go func() {
@@ -83,11 +91,11 @@ func (m *Market) ReadFromSnapshot(_ context.Context, tag Tag, page int) ([]Event
 
 	r := make([]EventDTO, 0)
 
-	if tag == No {
+	if tag == All {
 		r = l
 	} else {
 		for _, e := range l {
-			if e.Tag != tag {
+			if e.Tag == tag {
 				r = append(r, e)
 			}
 		}
@@ -110,23 +118,13 @@ func (m *Market) ReadFromSnapshot(_ context.Context, tag Tag, page int) ([]Event
 	return r[start:end], totalPages, nil
 }
 
-func (m *Market) GetUserAssets(ctx context.Context, addr string) ([]*AssetDTO, error) {
+func (m *Market) GetUserAssets(ctx context.Context, addr string) ([]*Asset, error) {
 	assetList, err := m.persistor.getUserAssets(ctx, addr)
 	if err != nil {
 		return nil, fmt.Errorf("market get user assets failed: %v", err)
 	}
 
-	assetDtoList := make([]*AssetDTO, 0, len(assetList))
-	for _, asset := range assetList {
-		assetDtoList = append(assetDtoList, &AssetDTO{
-			EventTitle:       asset.EventTitle,
-			Token:            asset.Token,
-			CollateralStaked: utils.GramsToStringInFloat(asset.CollateralStaked),
-			Size:             utils.GramsToStringInFloat(asset.Size),
-		})
-	}
-
-	return assetDtoList, nil
+	return assetList, nil
 }
 
 func (m *Market) makeSnapshot(ctx context.Context) error {
@@ -179,7 +177,7 @@ func (m *Market) snapshotBets(_ context.Context, e Event, state *eventState) []*
 		bDTO := &BetDTO{
 			Token:      t,
 			Title:      b.Title,
-			Percentage: fmt.Sprintf("%.0f", state.betStateMap[t].percentage),
+			Percentage: utils.FloatToString(state.betStateMap[t].percentage),
 		}
 		betDTOList = append(betDTOList, bDTO)
 	}
@@ -198,7 +196,19 @@ func GetMarket() *Market {
 		if err != nil {
 			log.Fatalln(err)
 		}
+		pk, err := wallet.SeedToPrivateKey(SEED)
+		if err != nil {
+			log.Fatalln(err)
+		}
+
+		w, err := wallet.New(pk, wallet.HighLoadV2R2, client)
+		if err != nil {
+			log.Fatalln(err)
+		}
+
 		singleton = &Market{
+			w,
+			make(chan *EventDTO),
 			make(chan *DepositReq, 100),
 			client,
 			&snapshot{
@@ -236,19 +246,19 @@ func (m *Market) Deposit(_ context.Context, dr *DepositReq) error {
 
 var ErrVerifyTransaction = errors.New("[ERROR] verify transaction")
 
-func (m *Market) verifyTransaction() {
+func (m *Market) verifyIncomeTransactions() {
 	for dr := range m.ch {
-		if dr.Time.Add(time.Minute).After(time.Now()) {
-			m.ch <- dr
-			continue
-		}
 		ctx := context.TODO()
 
 		if dr.DepositStatus == ERROR {
 			if err := m.persistor.deleteDeal(ctx, dr.ID); err != nil {
 				log.Printf("%v, id: %s: err delete unsigned transaction: %v\n", ErrVerifyTransaction, dr.ID.String(), err)
 			}
+			continue
+		}
 
+		if dr.Time.Add(time.Minute).After(time.Now()) {
+			m.ch <- dr
 			continue
 		}
 
@@ -277,30 +287,80 @@ func (m *Market) verifyTransaction() {
 
 		trxList, err := getLastTransactions()
 
-		for _, trx := range trxList {
-			var t wallet.TextComment
-			if err := tlb.Unmarshal((*boc.Cell)(&trx.Msgs.OutMsgs.Values()[0].Value.Body.Value), &t); err != nil {
-				log.Printf("[WARNING] verify transaction, id: %s, user_raw_address: %s, can't unmarshal boc: %v\n", dr.ID.String(), userRawAddress, err)
-				continue
-			}
-
-			idStr := wallet.TextComment(dr.ID.String())
-
-			if t == idStr {
-				deal, err := m.persistor.verifyDealAndGet(ctx, dr.ID)
-				if err != nil {
-					log.Printf("%v, id: %s: user_raw_address: %s: %v\n", ErrVerifyTransaction, dr.ID.String(), userRawAddress, err)
-					continue
-				}
-
-				if err := m.runtimer.deposit(ctx, deal); err != nil {
-					log.Printf("%v, id: %s: user_raw_address: %s: %v\n", ErrVerifyTransaction, dr.ID.String(), userRawAddress, err)
-				}
-
-				continue
-			}
+		if err != nil {
+			log.Printf("%v, id: %s: user_raw_address: %s: %v\n", ErrVerifyTransaction, dr.ID.String(), userRawAddress, err)
+			continue
 		}
 
-		log.Printf("%v, id: %s: user_raw_address: %s: transaction with deal id wasn't found\n", ErrVerifyTransaction, dr.ID.String(), userRawAddress)
+		deal, err := m.iterateTransactionList(ctx, dr, userRawAddress, trxList)
+		if err != nil {
+			log.Printf("%v\n", err)
+			continue
+		}
+
+		if err := m.sendToSocket(ctx, deal.EventID); err != nil {
+			log.Printf("%v\n", err)
+			continue
+		}
 	}
+}
+
+var ErrTransactionNotFound = errors.New("transaction not found in block chain")
+
+func (m *Market) iterateTransactionList(ctx context.Context, dr *DepositReq, userRawAddress string, trxList []ton.Transaction) (*Deal, error) {
+	for _, trx := range trxList {
+		var t wallet.TextComment
+		if err := tlb.Unmarshal((*boc.Cell)(&trx.Msgs.OutMsgs.Values()[0].Value.Body.Value), &t); err != nil {
+			log.Printf("[WARNING] verify transaction, id: %s, user_raw_address: %s, can't unmarshal boc: %v\n", dr.ID.String(), userRawAddress, err)
+			continue
+		}
+
+		idStr := wallet.TextComment(dr.ID.String())
+
+		if t == idStr {
+			deal, err := m.persistor.verifyDealAndGet(ctx, dr.ID)
+			if err != nil {
+				return nil, fmt.Errorf("iterate transaction list failed: id: %s: user_raw_address: %s: %w", dr.ID.String(), userRawAddress, err)
+			}
+
+			if err := m.runtimer.deposit(ctx, deal); err != nil {
+				return nil, fmt.Errorf("iterate transaction list failed: id: %s: user_raw_address: %s: %w", dr.ID.String(), userRawAddress, err)
+			}
+			return deal, nil
+		}
+	}
+	return nil, fmt.Errorf("iterate transaction list failed: id: %s: user_raw_address: %s: %w", dr.ID.String(), userRawAddress, ErrTransactionNotFound)
+}
+
+func (m *Market) sendToSocket(ctx context.Context, id uuid.UUID) error {
+	eventCopy, err := m.persistor.getCopyByID(ctx, id)
+	if err != nil {
+		return fmt.Errorf("send to socket failed: %w", err)
+	}
+
+	eventState := m.runtimer.getEventState(ctx, id)
+
+	eventDTO := &EventDTO{
+		ID:              eventCopy.ID,
+		Tag:             eventCopy.Tag,
+		LogoLink:        eventCopy.LogoLink,
+		Title:           eventCopy.Title,
+		Collateral:      utils.GramsToStringInFloat(eventState.collateral),
+		CollateralGrams: eventState.collateral,
+		Bets: []*BetDTO{
+			{
+				Token:      token.A,
+				Title:      eventCopy.BetMap[token.A].Title,
+				Percentage: utils.FloatToString(eventState.betStateMap[token.A].percentage),
+			},
+			{
+				Token:      token.B,
+				Title:      eventCopy.BetMap[token.B].Title,
+				Percentage: utils.FloatToString(eventState.betStateMap[token.B].percentage),
+			},
+		},
+	}
+
+	m.WsCh <- eventDTO
+	return nil
 }
