@@ -61,16 +61,18 @@ func main() {
 func testData() {
 	e := &market.Event{
 		Tag:      market.Politic,
-		LogoLink: "no",
+		LogoLink: "",
 		Title:    "Will Ton Market win hackathon?",
 		BetMap: map[token.Token]*market.Bet{
 			token.A: {
-				Token: token.A,
-				Title: "Yes",
+				Token:    token.A,
+				Title:    "Yes",
+				LogoLink: "",
 			},
 			token.B: {
-				Token: token.B,
-				Title: "All",
+				Token:    token.B,
+				Title:    "No",
+				LogoLink: "",
 			},
 		},
 	}

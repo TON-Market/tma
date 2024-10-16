@@ -48,6 +48,7 @@ type BetDTO struct {
 	Token      token.Token `json:"token"`
 	Title      string      `json:"title"`
 	Percentage string      `json:"percentage"`
+	LogoLink   string      `json:"logoLink"`
 }
 
 type EventDTO struct {
@@ -82,7 +83,8 @@ type Deal struct {
 type Bet struct {
 	EventID uuid.UUID
 	token.Token
-	Title string
+	Title    string
+	LogoLink string
 }
 
 // Event persist data
@@ -136,9 +138,6 @@ var ErrEventClosed = errors.New("event closed")
 func (er *eventRuntime) deposit(t token.Token, g tlb.Grams) {
 	er.RLock()
 	defer er.RUnlock()
-	//if !er.isActive {
-	//	return ErrEventClosed
-	//}
 	er.betRuntimeMap[t].deposit(g)
 }
 
