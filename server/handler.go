@@ -27,13 +27,11 @@ type jwtCustomClaims struct {
 
 type handler struct {
 	tonConnectMainNet *tonconnect.Server
-	tonConnectTestNet *tonconnect.Server
 }
 
-func newHandler(tonConnectMainNet, tonConnectTestNet *tonconnect.Server) *handler {
+func newHandler(tonConnectMainNet *tonconnect.Server) *handler {
 	h := handler{
 		tonConnectMainNet: tonConnectMainNet,
-		tonConnectTestNet: tonConnectTestNet,
 	}
 	return &h
 }

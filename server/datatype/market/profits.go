@@ -2,6 +2,7 @@ package market
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"github.com/TON-Market/tma/server/datatype/token"
 	"github.com/google/uuid"
@@ -16,7 +17,7 @@ func (m *Market) CloseEvent(ctx context.Context, id uuid.UUID, winToken token.To
 	if err := m.runtimer.close(ctx, id); err != nil {
 		return fmt.Errorf("close event failed: %w", err)
 	}
-	time.Sleep(5 * time.Minute)
+	time.Sleep(30 * time.Second)
 	userTotalReturnMap, err := m.calcUsersProfit(ctx, id, winToken)
 	if err != nil {
 		return fmt.Errorf("close event failed: %w", err)
@@ -64,6 +65,7 @@ func (m *Market) calcUsersProfit(ctx context.Context, id uuid.UUID, winToken tok
 		profit := rest * float64(loseCollateral)
 		userTotalReturn := profit + float64(asset.CollateralStaked)
 		returnGrams := tlb.Grams(userTotalReturn) - baseFee
+
 		if returnGrams < 0 {
 			continue
 		}
@@ -73,13 +75,11 @@ func (m *Market) calcUsersProfit(ctx context.Context, id uuid.UUID, winToken tok
 	return userTotalReturnMap, nil
 }
 
+var ErrCantSendSimpleTransfer = errors.New("can't send simple transfer")
+
 func (m *Market) profitUsers(ctx context.Context, userTotalReturnMap UserTotalReturnMap, eventId uuid.UUID) error {
 	for address, grams := range userTotalReturnMap {
-		recepient, err := ton.ParseAccountID(address)
-		if err != nil {
-			log.Printf("[ERROR] profit users, close event id: %s, failed parse account id for user: %s, err: %s\n", eventId.String(), recepient, err.Error())
-			continue
-		}
+		recepient := ton.MustParseAccountID(address)
 
 		message := wallet.SimpleTransfer{
 			Amount:     grams,
@@ -88,7 +88,18 @@ func (m *Market) profitUsers(ctx context.Context, userTotalReturnMap UserTotalRe
 			Bounceable: false,
 		}
 
-		if err = m.wallet.Send(ctx, message); err != nil {
+		trySend := func() error {
+			for i := 0; i < 10; i++ {
+				if err := m.wallet.Send(ctx, message); err != nil {
+					time.Sleep(7 * time.Second)
+					continue
+				}
+				return nil
+			}
+			return ErrCantSendSimpleTransfer
+		}
+
+		if err := trySend(); err != nil {
 			log.Printf("[ERROR] profit users, close event id: %s, send simple transfer failed for user: %s, err: %s\n", eventId.String(), recepient, err.Error())
 		}
 	}

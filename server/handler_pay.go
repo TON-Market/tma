@@ -134,20 +134,16 @@ func (h *handler) Deposit(c echo.Context) error {
 }
 
 type CloseReq struct {
-	DealID string      `json:"dealID"`
-	Token  token.Token `json:"token"`
+	DealID    string      `json:"dealID"`
+	Token     token.Token `json:"token"`
+	SecretKey string      `json:"secretKey"`
 }
 
-const OWNER_ADDRESS = "0:5b452556465447d03fce276a738ff29aa1ea39fd0dc5fba1a10dac97d38e17af"
+const SECRET_KEY = "7ab340c6-c17d-463a-80d1-27d8ba169bd4"
 
 func (h *handler) Close(c echo.Context) error {
 	ctx := context.TODO()
 	lg := log.WithContext(ctx).WithField("prefix", "Close")
-
-	//addr := c.Get("address").(string)
-	//if addr != OWNER_ADDRESS {
-	//	return c.JSON(HttpResErrorWithLog("you are not owner", http.StatusUnauthorized, lg))
-	//}
 
 	b, err := io.ReadAll(c.Request().Body)
 	if err != nil {
@@ -156,6 +152,10 @@ func (h *handler) Close(c echo.Context) error {
 
 	var closeReq CloseReq
 	if err := json.Unmarshal(b, &closeReq); err != nil {
+		return c.JSON(HttpResErrorWithLog(err.Error(), http.StatusBadRequest, lg))
+	}
+
+	if closeReq.SecretKey != SECRET_KEY {
 		return c.JSON(HttpResErrorWithLog(err.Error(), http.StatusBadRequest, lg))
 	}
 

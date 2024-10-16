@@ -33,24 +33,15 @@ func main() {
 	}
 	networks["-239"] = mainNetClient
 
-	testNetClient, err := liteapi.NewClientWithDefaultTestnet()
-	if err != nil {
-		log.Fatalf("failed init testnet liteapi client")
-	}
-	networks["-3"] = testNetClient
-
 	payloadLifeTime := config.Config.Proof.PayloadLifeTimeSec
 	proofLifeTime := config.Config.Proof.ProofLifeTimeSec
 	tonConnectMainNet, err := tonconnect.NewTonConnect(mainNetClient, config.Config.Proof.PayloadSignatureKey,
 		tonconnect.WithLifeTimePayload(payloadLifeTime), tonconnect.WithLifeTimeProof(proofLifeTime))
-	tonConnectTestNet, err := tonconnect.NewTonConnect(testNetClient, config.Config.Proof.PayloadSignatureKey,
-		tonconnect.WithLifeTimePayload(payloadLifeTime), tonconnect.WithLifeTimeProof(proofLifeTime))
 
-	h := newHandler(tonConnectMainNet, tonConnectTestNet)
+	h := newHandler(tonConnectMainNet)
 	w := newSocket()
 
 	market.GetMarket().Start(context.TODO())
-
 	registerHandlers(e, h, w)
 
 	testData()

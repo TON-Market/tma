@@ -21,9 +21,6 @@ import (
 	"time"
 )
 
-const BANK_ADDR = "EQBRW9rjhRUNL-Sy4swYbMzm2MgvlhC2DWIZFhYp2JnSoJaA"
-const SEED = "example consider fiscal mail guitar tiger duck exhibit ancient series differ wealth mix kitchen cactus upgrade unable yellow impact confirm denial mesh during dove"
-
 type snapshot struct {
 	sync.RWMutex
 	list []EventDTO
@@ -294,8 +291,8 @@ func (m *Market) verifyIncomeTransactions() {
 		}
 
 		getLastTransactions := func() ([]ton.Transaction, error) {
-			for i := 0; i < 5; i++ {
-				l, err := m.client.GetLastTransactions(ctx, accountID, 5)
+			for i := 0; i < 10; i++ {
+				l, err := m.client.GetLastTransactions(ctx, accountID, 10)
 				if err != nil {
 					time.Sleep(5 * time.Second)
 					continue
