@@ -6,7 +6,7 @@ import NewsCard from './NewsCard.vue';
 	<div class="news">
 		<NewsCard
 			text="Welcome to TonMarket!"
-			image="https://s3-alpha-sig.figma.com/img/4f06/46fc/52ff554687f1ed0ba834e6c65c962f38?Expires=1728864000&Key-Pair-Id=APKAQ4GOSFWCVNEHN3O4&Signature=CPI-Xr01NVlqw9fSFe9jFzkxVIcBMdJ~zL6MCLk2DQOx9hBl~NENn6QlVg86XAdzZzttlg60WMZOM9rZZQOC8PuHAFc83GOz2eoWN8cQCfF-mIuCZ-Twfq~PoPSrwh8S02~Jredgy4aZLexttww7Lj2HX39CbsQqtzs0WdyC7hf6sdMgqjvLR-LPNZkmtaMDrgulqYWZRh79reP-B3CjmUjTAO5jdMnLslIdEPpvLr1XQroDYseMs~5se0xlVygGhN8TUOgwqWixwGYvBAjm-ff6a5y~bkJFw-nmG7wPukd3~mAAp1JJe~TUxWoqYjx6bNPaOIQq6fXADhcHx43X9g__"
+			image="https://s3-alpha-sig.figma.com/img/4f06/46fc/52ff554687f1ed0ba834e6c65c962f38?Expires=1730073600&Key-Pair-Id=APKAQ4GOSFWCVNEHN3O4&Signature=eTT~lYWv6FIpGmLMrREieJAWX9w6AmM2HsJsZY4fty41lQ-9F2z6U4fM3lssgrXOoTQ3-6uBXa0av9LXQ2ABh1lMQXhaG38CaXDZmPrG1n6QwqtQEoVM4afz10lQhNxXfK8e5tGrHh0u83vnJYCRs4SAN2kPiQzhnRHmpWMOd6JJvvgBIinJ0jgO7tYsmL6d4ARN9E4svyFliWXrqiHLMl8vpEVFTBjhqZhcjBztRmzTNuplN7IPxgia5LU0muQwFvESHQQnINuc5ylO8fJNeDDeRqB4CWjv6h8TBLJ2r5ukGXDRiI5RaU-Zu3F4EzlWt6L-EdyfWyCFH2xh236oWQ__"
 		/>
 		<NewsCard
 			text="2024 Election Forecast Election Forecast Election Forecast"
@@ -25,5 +25,6 @@ import NewsCard from './NewsCard.vue';
 	display: flex;
 	overflow-x: scroll;
 	gap: 6px;
+	padding-bottom: 20px;
 }
 </style>

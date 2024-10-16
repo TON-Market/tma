@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import EventCard from './EventCard.vue';
 
+import Tabs from '@/components/Tabs.vue';
 import { useEvents } from '@/services/events';
 
 const events = useEvents();
@@ -8,24 +9,13 @@ events.getTags();
 </script>
 
 <template>
-	<div class="tags">
-		<span
-			v-for="tag in events.tags"
-			:key="tag.id"
-			:class="{ active: tag.id === events.tag }"
-			@click="events.load(1, tag.id, true)"
-		>
-			{{ tag.title }}
-		</span>
-	</div>
+	<Tabs
+		:items="events.tags"
+		:active="events.tag"
+		@selected="id => events.load(1, id, true)"
+	/>
 	<div class="events">
 		<div class="events-content">
-			<!-- new Array(20).fill({
-					id: 'string',
-					collateral: 'number',
-					logo: 'string',
-					title: 'string',
-				}) -->
 			<EventCard
 				v-for="event in events.sorted"
 				:key="event.id"
@@ -54,35 +44,6 @@ events.getTags();
 </template>
 
 <style scoped>
-.tags {
-	display: flex;
-	justify-content: space-between;
-	gap: 24px;
-	padding: 20px 0;
-	overflow-x: scroll;
-	font-family: IBM Plex Sans;
-	user-select: none;
-
-	position: sticky;
-	top: 0;
-	background: var(--color-background);
-	z-index: 1000;
-}
-
-.tags span {
-	cursor: pointer;
-	font-size: 20px;
-	border-bottom: 2px solid transparent;
-}
-
-.tags span.active {
-	color: var(--color-text-active);
-	border-color: var(--vt-c-blue);
-}
-
-.events {
-	padding-bottom: 20px;
-}
 .events-content {
 	display: flex;
 	flex-direction: column;

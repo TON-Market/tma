@@ -3,7 +3,12 @@ import Bet from './Bet.vue';
 
 import Card from '@/components/Card.vue';
 import Collateral from '@/components/Collateral.vue';
-import SelectCount from '@/components/popups/SelectCount.vue';
+import type { Event } from '@/services/events';
+import { useRedirect } from '@/shared/hooks/useRedirect';
+
+defineProps<{
+	event: Event;
+}>();
 </script>
 
 <template>
@@ -11,16 +16,16 @@ import SelectCount from '@/components/popups/SelectCount.vue';
 		<template #default>
 			<div class="bets">
 				<Bet
-					image="https://s3-alpha-sig.figma.com/img/8a15/20dc/d8810e3c96b861fcd97b42095a18474f?Expires=1729468800&Key-Pair-Id=APKAQ4GOSFWCVNEHN3O4&Signature=lFQNvwmPdb9pMyEPbLvanH8RZldF4Fnl~jbqJXZ2IlshIW8DPNuamAG7PqsVrf64YAYZMKDm3aYtrwJlXMiKU29RrOL3uprU3EAYqXyQpSRzO9OXW50vtstBEsyXU-Glj-YQY48h0E3nNAXHA2dY9~yquJZJnHBc2fndZxFe06hpj9U7yoBF-NC0V5c95rHQ9If14YjSmY~glMYBZknf22OlZiYHr9NRDtirWO5YHoSMb9s4z-GbG7RdsGV~UYgqH8VFZXSr9qMwXNmuffL0JExCTtAH0iWBgIqI8BBsWdjDHTMPmkDUFyeClhydY4BA7xG-EWYAVdNr~rr93zOG5g__"
-					:income="1"
-					:value="51"
-					name="Donald Trump"
+					:image="event?.bets[0].logoLink"
+					:income="0"
+					:value="event?.bets[0].percentage!"
+					:name="event?.bets[0].title!"
 				/>
 				<Bet
-					image="https://s3-alpha-sig.figma.com/img/8364/bf7e/5e9f2bbb3cf77e425ee6cc711866bf13?Expires=1729468800&Key-Pair-Id=APKAQ4GOSFWCVNEHN3O4&Signature=HpHQSbCTQ0noFZwQRCQw5dMsX3wVQFH8cdkzimEhHUd-tJYOaoB0YBRavylQIzSXgqH~OynODw8C0QTs09JQULLMaaJqcH4bXtzVt5gxLf~6z5~fB1Y4oa3m5X7OBrSMrD5Tue7ZmexpjFwTsEMSgYuzQ6QGHRUnm22iz5hlogz3-0pBn9S4F9IqrCgFoikjkr~naLufHcp61msmNlv8ZBuT8-pZBBqiSoDqz9XTQJvAVc1vQJIPwe9-46qxeWb-KcgEoaUnQixccek6i94vVD0hNgXCLQw7SFMwMatjroKjyfKhpsEaBXf3yiLYEafPXiPy8WoWWQfSoUxh-tbOtQ__"
-					:income="-1"
-					:value="49"
-					name="Kamala Harris"
+					:image="event?.bets[1].logoLink"
+					:income="0"
+					:value="event?.bets[1].percentage!"
+					:name="event?.bets[1].title!"
 					class="reversed"
 				/>
 			</div>
@@ -28,19 +33,21 @@ import SelectCount from '@/components/popups/SelectCount.vue';
 				<div
 					class="progress"
 					:style="{
-						width: `${51}%`,
+						width: `${event?.bets[0].percentage}%`,
 					}"
 				></div>
 			</div>
 			<div class="controls">
-				<SelectCount
-					eventID="TEST"
-					token="TEST"
+				<v-btn
+					text="Buy"
+					variant="flat"
+					@click="useRedirect('bet', { eventID: event?.id, token: event?.bets[0].token })"
 				/>
-				<Collateral :value="153" />
-				<SelectCount
-					eventID="TEST"
-					token="TEST"
+				<Collateral :value="event?.collateral!" />
+				<v-btn
+					text="Buy"
+					variant="flat"
+					@click="useRedirect('bet', { eventID: event?.id, token: event?.bets[1].token })"
 				/>
 			</div>
 		</template>

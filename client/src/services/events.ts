@@ -5,8 +5,9 @@ import { $API } from '@/api';
 export interface Bet {
 	collateral: number;
 	title: string;
-	percentage: number;
+	percentage: string;
 	token: string;
+	logoLink: string;
 }
 
 export interface Event {
@@ -33,6 +34,7 @@ interface EventStore {
 	page: number;
 
 	items: Event[];
+	current: Event | null;
 }
 
 export const useEvents = defineStore('events', {
@@ -47,6 +49,7 @@ export const useEvents = defineStore('events', {
 		page: 0,
 
 		items: [],
+		current: null,
 	}),
 	getters: {
 		sorted: state => state.items.sort((a, b) => b.collateral - a.collateral),
@@ -91,6 +94,9 @@ export const useEvents = defineStore('events', {
 			} else {
 				this.items.push(data);
 			}
+		},
+		select(id: Event['id']) {
+			this.current = this.items.find(it => it.id === id) || null;
 		},
 		async nextPage() {
 			if (this.loading) return;
