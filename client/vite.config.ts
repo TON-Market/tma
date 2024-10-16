@@ -5,7 +5,7 @@ import { defineConfig } from 'vite';
 import vueDevTools from 'vite-plugin-vue-devtools';
 import vuetify from 'vite-plugin-vuetify';
 
-const SERVER_HOST = 'ey9rny-88-201-232-88.ru.tuna.am';
+const SERVER_HOST = 'localhost:8081';
 
 export default defineConfig({
 	plugins: [vue(), vueDevTools(), vuetify()],

@@ -37,7 +37,8 @@ const { items, active } = defineProps<{
 	display: flex;
 	gap: 24px;
 	padding-bottom: 20px;
-	overflow-x: scroll;
+	overflow-x: auto;
+	min-height: max-content;
 	font-family: IBM Plex Sans;
 	user-select: none;
 	position: sticky;

@@ -146,7 +146,9 @@ function onPctUpdated(value: number) {
 <style scoped>
 .bet {
 	display: flex;
-	justify-content: space-between;
+	flex-wrap: wrap;
+	gap: 40px 20px;
+	justify-content: space-around;
 	color: var(--color-text-active);
 }
 
