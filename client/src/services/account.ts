@@ -27,8 +27,47 @@ interface DepositApprovement {
 	depositID: PayResp['depositID'];
 }
 
+interface Asset {
+	eventTitle: string;
+	betTitle: string;
+	collateralStaked: string;
+	size: string;
+}
+
+interface Account {
+	address: string | null;
+	balance: number | null;
+	assets: Asset[];
+	total: string;
+}
+
 export const useAccount = defineStore('account', {
+	state: (): Account => ({
+		address: null,
+		balance: null,
+		assets: [],
+		total: '',
+	}),
 	actions: {
+		async getBalance() {
+			if (!this.address) {
+				this.balance = null;
+				return;
+			}
+			const data = (await $API.get(`https://tonapi.io/v2/accounts/${this.address}`)).data;
+			this.balance = data.balance / 1000000000;
+		},
+		async getAssets() {
+			const data = (
+				await $API.get<{
+					assetList: Asset[];
+					totalInMarket: string;
+				}>('assets')
+			).data;
+
+			this.assets = data.assetList;
+			this.total = data.totalInMarket;
+		},
 		async getPaymentInfo(data: PayData) {
 			return (await $API.post<PayResp>('pay', data)).data;
 		},
@@ -38,8 +77,14 @@ export const useAccount = defineStore('account', {
 		async getProof() {
 			return (await $API.post('generate-payload')).data.payload;
 		},
-		async checkProof(data) {
-			return await $API.post('check-proof', data);
+		checkProof(data: any) {
+			return $API.post('check-proof', data);
+		},
+		setAddress(value: string) {
+			this.address = value;
+		},
+		disconnect() {
+			return $API.delete('disconnect');
 		},
 	},
 });

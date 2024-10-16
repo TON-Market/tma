@@ -8,6 +8,7 @@ interface Card {
 	expandable?: boolean;
 	logo?: string;
 	title?: string;
+	noLogo?: boolean;
 }
 
 const { logo, title, expandable } = defineProps<Card>();
@@ -20,9 +21,19 @@ const open = ref(!expandable);
 		<div
 			v-if="title"
 			class="info"
+			@click="
+				() => {
+					if (expandable) {
+						open = !open;
+					}
+				}
+			"
 		>
 			<div class="title">
-				<div class="logo">
+				<div
+					v-if="!noLogo"
+					class="logo"
+				>
 					<slot name="icon">
 						<Image
 							rounded
@@ -31,19 +42,26 @@ const open = ref(!expandable);
 						/>
 					</slot>
 				</div>
-				<div class="text">
+				<div
+					:class="[
+						'text',
+						{
+							grow: noLogo,
+						},
+					]"
+				>
 					<p>{{ title }}</p>
 				</div>
 			</div>
 			<slot name="info"></slot>
-			<ChevronDown
-				v-if="expandable"
-				@click="open = !open"
-			/>
+			<ChevronDown v-if="expandable" />
 		</div>
 		<div
 			v-if="open"
 			class="card-content"
+			:style="{
+				marginTop: title ? '20px' : '0',
+			}"
 		>
 			<slot></slot>
 		</div>
@@ -59,16 +77,15 @@ const open = ref(!expandable);
 	background-position: center center;
 	min-width: 200px;
 	border-radius: 20px;
-
 	display: flex;
 	flex-direction: column;
 	justify-content: space-between;
+	padding: 20px;
 }
 
 .info {
 	display: flex;
 	justify-content: space-between;
-	padding: 20px;
 	align-items: center;
 }
 
@@ -79,14 +96,16 @@ const open = ref(!expandable);
 }
 
 .logo {
-	border-radius: 50%;
-	overflow: hidden;
 	display: flex;
+	min-width: 30px;
+	justify-content: center;
+	align-items: center;
 }
 
 .logo img {
 	width: 100%;
 	height: 100%;
+	border-radius: 50%;
 }
 
 .text p {
@@ -98,7 +117,8 @@ const open = ref(!expandable);
 	font-weight: 500;
 }
 
-.card-content {
-	padding: 20px;
+.grow {
+	font-weight: 700;
+	font-size: 20px;
 }
 </style>

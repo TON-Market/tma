@@ -3,7 +3,7 @@ import Image from '@/components/Image.vue';
 
 const { image } = defineProps<{
 	name: string;
-	value: number;
+	value: string;
 	income: number;
 	image: string;
 }>();
@@ -28,7 +28,7 @@ const { image } = defineProps<{
 					falling: income < 0,
 				}"
 			>
-				{{ income > 0 ? '+' : '-' }} {{ Math.abs(income) }}%
+				<!-- {{ income > 0 ? '+' : '-' }} {{ Math.abs(income) }}% -->
 			</div>
 		</div>
 	</div>

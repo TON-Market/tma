@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import Card from '@/components/Card.vue';
 import Collateral from '@/components/Collateral.vue';
-import SelectCount from '@/components/popups/SelectCount.vue';
 import type { Event } from '@/services/events';
 import { useRedirect } from '@/shared/hooks/useRedirect';
 
@@ -12,6 +11,7 @@ const { event } = defineProps<{
 
 <template>
 	<Card
+		style="cursor: pointer"
 		v-bind="event"
 		@click="useRedirect('event', { id: event.id })"
 	>
@@ -28,9 +28,10 @@ const { event } = defineProps<{
 					<span>{{ bet.title }}</span>
 					<div class="controls">
 						<span>{{ bet.percentage }}%</span>
-						<SelectCount
-							:eventID="event.id"
-							:token="bet.token"
+						<v-btn
+							text="Buy"
+							variant="flat"
+							@click.stop="useRedirect('bet', { eventID: event.id, token: bet.token })"
 						/>
 						<v-btn
 							disabled

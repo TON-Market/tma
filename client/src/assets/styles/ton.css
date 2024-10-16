@@ -1,3 +1,12 @@
 #ton-connect-button button {
 	background: linear-gradient(45deg, #9975ff36, #9975ff33);
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	color: var(--vt-c-purple);
+}
+
+#ton-connect-button .go1140934594 {
+	color: var(--vt-c-purple) !important;
+	font-size: 14px !important;
 }

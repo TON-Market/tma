@@ -1,9 +1,14 @@
 <script setup lang="ts">
 import Card from '@/components/Card.vue';
+import type { Event } from '@/services/events';
+
+defineProps<{
+	event: Event;
+}>();
 </script>
 
 <template>
-	<Card title="Graph">
+	<Card :title="event.title">
 		<template #default>
 			<div class="graph">
 				<div class="graph-content">

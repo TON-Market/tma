@@ -14,7 +14,13 @@ export const routes = [
 	{
 		path: '/account',
 		name: 'account',
-		component: () => import('@/views/AccountView.vue'),
+		component: () => import('@/views/AccountView/AccountView.vue'),
+	},
+	{
+		path: '/buy/:eventID/:token',
+		name: 'bet',
+		component: () => import('@/views/BetView/BetView.vue'),
+		props: true,
 	},
 ] as const satisfies RouteRecordRaw[];
 
