@@ -40,6 +40,10 @@ func Get() *pgxpool.Pool {
 			log.Fatalf("pool connection create failed: %v", err)
 		}
 
+		if _, err = pool.Exec(context.Background(), q); err != nil {
+			log.Fatalln(err)
+		}
+
 		singleton = pool
 	})
 

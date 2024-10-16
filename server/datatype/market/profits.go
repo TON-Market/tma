@@ -17,7 +17,7 @@ func (m *Market) CloseEvent(ctx context.Context, id uuid.UUID, winToken token.To
 	if err := m.runtimer.close(ctx, id); err != nil {
 		return fmt.Errorf("close event failed: %w", err)
 	}
-	time.Sleep(30 * time.Second)
+	time.Sleep(3 * time.Minute)
 	userTotalReturnMap, err := m.calcUsersProfit(ctx, id, winToken)
 	if err != nil {
 		return fmt.Errorf("close event failed: %w", err)
@@ -100,7 +100,7 @@ func (m *Market) profitUsers(ctx context.Context, userTotalReturnMap UserTotalRe
 		}
 
 		if err := trySend(); err != nil {
-			log.Printf("[ERROR] profit users, close event id: %s, send simple transfer failed for user: %s, err: %s\n", eventId.String(), recepient, err.Error())
+			log.Printf("[ERROR] profit users, close event id: %s, send simple transfer failed for user: %s, has to get: %v err: %s\n", eventId.String(), recepient, grams, err.Error())
 		}
 	}
 	return nil
