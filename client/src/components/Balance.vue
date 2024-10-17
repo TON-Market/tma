@@ -12,7 +12,7 @@ const account = useAccount();
 		class="balance"
 		@click="useRedirect('account')"
 	>
-		<div>{{ account.balance }}</div>
+		<div>{{ account.balance.toFixed(1) }}</div>
 		<Ton />
 	</div>
 </template>
@@ -28,7 +28,7 @@ const account = useAccount();
 
 	background: linear-gradient(45deg, #9975ff36, #9975ff33);
 	border-radius: 100vh;
-	padding: 0 16px;
+	padding: 0 8px;
 
 	cursor: pointer;
 }

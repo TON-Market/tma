@@ -27,9 +27,22 @@ events.$onAction(async act => {
 		await handleScroll();
 	}
 });
+
+const search = ref('');
 </script>
 
 <template>
+	<div class="search">
+		<v-text-field
+			rounded="xl"
+			placeholder="Search..."
+			v-model:model-value="search"
+		>
+			<template #append-inner>
+				<Search />
+			</template>
+		</v-text-field>
+	</div>
 	<div
 		ref="scrollElement"
 		class="scroll"
@@ -45,6 +58,10 @@ events.$onAction(async act => {
 </template>
 
 <style>
+.search {
+	padding-bottom: 20px;
+}
+
 .scroll {
 	flex-grow: 1;
 	height: 0;

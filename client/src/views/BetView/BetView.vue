@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { CHAIN, useTonConnectModal, useTonConnectUI } from '@townsquarelabs/ui-vue';
 import { storeToRefs } from 'pinia';
-import { ref } from 'vue';
+import { computed, ref } from 'vue';
 import { VNumberInput } from 'vuetify/labs/VNumberInput';
 
 import BetTabs from './components/BetTabs.vue';
@@ -74,6 +74,24 @@ function onTonUpdated(value: number) {
 function onPctUpdated(value: number) {
 	ton.value = parseFloat((((account.balance ?? 0) / 100) * value).toFixed(4));
 }
+
+const ticks = computed((): {} => {
+	const w = window.innerWidth;
+
+	return w > 400
+		? {
+				0: '0%',
+				25: '25%',
+				50: '50%',
+				75: '75%',
+				100: '100%',
+			}
+		: {
+				0: '0%',
+				50: '50%',
+				100: '100%',
+			};
+});
 </script>
 
 <template>
@@ -108,13 +126,7 @@ function onPctUpdated(value: number) {
 					v-model:model-value="pct"
 					color="primary"
 					:max="100"
-					:ticks="{
-						0: '0%',
-						25: '25%',
-						50: '50%',
-						75: '75%',
-						100: '100%',
-					}"
+					:ticks="ticks"
 					show-ticks="always"
 					step="1"
 					tick-size="4"
@@ -149,7 +161,6 @@ function onPctUpdated(value: number) {
 <style scoped>
 .bet {
 	display: flex;
-	flex-wrap: wrap;
 	gap: 40px 20px;
 	justify-content: space-around;
 	color: var(--color-text-active);
@@ -158,10 +169,8 @@ function onPctUpdated(value: number) {
 .bet-controls {
 	flex-grow: 1;
 	display: flex;
-	padding: 20px;
 	flex-direction: column;
 	gap: 14px;
-	min-width: min(260px, 100%);
 }
 
 .bet-controls .v-slider-track__tick-label {
@@ -177,13 +186,13 @@ function onPctUpdated(value: number) {
 	display: flex;
 	justify-content: center;
 	align-items: center;
-	width: 200px;
-	height: 400px;
 	position: relative;
 }
 
 .graph-demo img {
 	filter: blur(6px);
+	width: 100%;
+	height: 100%;
 }
 
 .graph-info {

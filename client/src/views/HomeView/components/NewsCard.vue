@@ -40,7 +40,7 @@ const { text, image } = defineProps<{
 	display: flex;
 	align-items: center;
 	width: 100%;
-	padding: 20px;
+	padding: 10px;
 }
 
 .card .text {

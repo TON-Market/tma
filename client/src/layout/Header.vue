@@ -1,22 +1,10 @@
 <script setup lang="ts">
 import { TonConnectButton, useTonAddress, useTonConnectUI } from '@townsquarelabs/ui-vue';
-import { computed, nextTick, ref } from 'vue';
-import { useRoute } from 'vue-router';
 
 import Logo from '@/assets/icons/Logo.vue';
-import Search from '@/assets/icons/Search.vue';
 import Balance from '@/components/Balance.vue';
 import { useAccount } from '@/services/account';
-import { useNavigation } from '@/services/navigation';
 import { useRedirect } from '@/shared/hooks/useRedirect';
-
-const search = ref('');
-const searchElement = ref();
-const route = useRoute();
-
-const showSearch = computed(() => route.name !== 'account');
-
-const navigation = useNavigation();
 
 const [tonConnectUI] = useTonConnectUI();
 
@@ -68,13 +56,6 @@ tonConnectUI.connectionRestored.then(() => {
 setInterval(() => {
 	account.getBalance();
 }, 5000);
-
-function registerSearchElement() {
-	nextTick(() => {
-		if (searchElement.value) navigation.registerSearchElement(searchElement.value);
-		else console.error('searchElement NOT FOUND ON THIS PAGE!');
-	});
-}
 </script>
 
 <template>
@@ -85,22 +66,6 @@ function registerSearchElement() {
 				<Balance />
 				<TonConnectButton />
 			</div>
-		</div>
-
-		<div
-			ref="searchElement"
-			v-if="showSearch"
-			@vue:mounted="registerSearchElement"
-		>
-			<v-text-field
-				rounded="xl"
-				placeholder="Search..."
-				v-model:model-value="search"
-			>
-				<template #append-inner>
-					<Search />
-				</template>
-			</v-text-field>
 		</div>
 	</header>
 </template>
@@ -121,7 +86,6 @@ header {
 .header-controls {
 	display: flex;
 	gap: 6px;
-	flex-wrap: wrap;
 	max-width: 60%;
 	justify-content: flex-end;
 }

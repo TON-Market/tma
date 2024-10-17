@@ -7,7 +7,9 @@ const { value } = defineProps<{
 </script>
 
 <template>
-	<div class="collateral">{{ value }} <Ton /></div>
+	<div class="collateral">
+		<Ton /><span style="white-space: nowrap">{{ parseFloat(value.toString()).toFixed(2) }} vol.</span>
+	</div>
 </template>
 
 <style scoped>

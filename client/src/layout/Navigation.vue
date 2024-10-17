@@ -42,7 +42,7 @@ function vibrate() {
 		<RouterLink :to="{ name: 'home' }">
 			<Home />
 		</RouterLink>
-		<Search @click="navigation.toSearch" />
+		<Search />
 		<Gift @click="vibrate" />
 		<RouterLink :to="{ name: 'account' }">
 			<Wallet />
