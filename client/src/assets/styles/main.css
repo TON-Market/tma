@@ -42,6 +42,8 @@
 	margin-top: 20px !important;
 }
 
-.v-slider-thumb {
-	margin-left: 6px;
+.v-btn--size-default {
+	min-width: unset !important;
+	height: unset !important;
+	padding: 3px 12px 5px 11px !important;
 }

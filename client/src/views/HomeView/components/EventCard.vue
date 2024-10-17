@@ -30,7 +30,7 @@ const notifier = useNotifier();
 				>
 					<span>{{ bet.title }}</span>
 					<div class="controls">
-						<span>{{ bet.percentage }}%</span>
+						<span style="font-size: 12px">{{ bet.percentage }}%</span>
 						<v-btn
 							text="Buy"
 							variant="flat"

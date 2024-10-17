@@ -75,24 +75,6 @@ function onTonUpdated(value: number) {
 function onPctUpdated(value: number) {
 	ton.value = parseFloat((((account.balance ?? 0) / 100) * value).toFixed(4));
 }
-
-const ticks = computed((): {} => {
-	const w = window.innerWidth;
-
-	return w > 420
-		? {
-				0: '0%',
-				25: '25%',
-				50: '50%',
-				75: '75%',
-				100: '100%',
-			}
-		: {
-				0: '0%',
-				50: '50%',
-				100: '100%',
-			};
-});
 </script>
 
 <template>
@@ -154,10 +136,16 @@ const ticks = computed((): {} => {
 					color="purple"
 					:thumb-size="10"
 					:max="100"
-					:ticks="ticks"
+					:ticks="{
+						0: '0%',
+						25: '25%',
+						50: '50%',
+						75: '75%',
+						100: '100%',
+					}"
 					show-ticks="always"
 					step="1"
-					tick-size="4"
+					hide-details
 					@update:model-value="onPctUpdated"
 				/>
 			</div>
@@ -249,6 +237,7 @@ const ticks = computed((): {} => {
 	align-items: center;
 	position: relative;
 	max-width: 40%;
+	width: 32%;
 }
 
 .graph-demo img {

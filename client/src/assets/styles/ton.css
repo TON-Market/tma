@@ -9,9 +9,13 @@
 
 #ton-connect-button .go1140934594 {
 	color: var(--vt-c-purple) !important;
-	font-size: 14px !important;
+	font-size: 12px !important;
 }
 
 .go3974562317 {
 	padding: 8px;
+}
+
+.go157313249 {
+	min-width: unset !important;
 }
