@@ -39,7 +39,6 @@ const { items, active } = defineProps<{
 	padding-bottom: 20px;
 	overflow-x: auto;
 	min-height: 54px;
-	min-height: max-content;
 	font-family: IBM Plex Sans;
 	user-select: none;
 	position: sticky;
