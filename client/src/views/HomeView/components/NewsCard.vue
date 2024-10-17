@@ -16,10 +16,15 @@ const { text, image } = defineProps<{
 		:url="image"
 	>
 		<div class="text">
-			<p>{{ text }}</p>
+			<p style="font-weight: 700">{{ text }}</p>
 		</div>
 		<div class="controls">
-			<button @click="notifier.info('Soon...')">View</button>
+			<button
+				style="font-weight: 700"
+				@click="notifier.info('Soon...')"
+			>
+				View
+			</button>
 		</div>
 	</BackgroundImage>
 </template>

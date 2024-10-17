@@ -100,5 +100,6 @@ header {
 	border-radius: 100vh;
 
 	padding: 0 14px;
+	gap: 6px;
 }
 </style>

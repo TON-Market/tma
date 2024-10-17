@@ -19,7 +19,7 @@ const account = useAccount();
 
 <style>
 .balance {
-	font-size: 14px;
+	font-size: 12px;
 	font-family: Montserrat;
 	font-weight: 800;
 	display: flex;

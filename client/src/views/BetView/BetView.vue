@@ -145,7 +145,6 @@ function onPctUpdated(value: number) {
 					}"
 					show-ticks="always"
 					step="1"
-					tick-size="4"
 					hide-details
 					@update:model-value="onPctUpdated"
 				/>
