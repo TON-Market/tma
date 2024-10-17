@@ -79,6 +79,9 @@ function onPctUpdated(value: number) {
 <template>
 	<div class="bet">
 		<div class="bet-controls">
+			<div>
+				{{ event?.title }}
+			</div>
 			<div style="display: flex; align-items: center; gap: 20px">
 				<Image
 					:width="40"
@@ -158,6 +161,11 @@ function onPctUpdated(value: number) {
 	padding: 20px;
 	flex-direction: column;
 	gap: 14px;
+	min-width: min(260px, 100%);
+}
+
+.bet-controls .v-slider-track__tick-label {
+	font-size: 0.7em;
 }
 
 .bet-controls-row {

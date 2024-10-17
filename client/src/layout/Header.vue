@@ -81,7 +81,7 @@ function registerSearchElement() {
 	<header>
 		<div class="header">
 			<Logo @click="useRedirect('home')" />
-			<div style="display: flex; gap: 6px">
+			<div class="header-controls">
 				<Balance />
 				<TonConnectButton />
 			</div>
@@ -116,6 +116,13 @@ header {
 	display: flex;
 	justify-content: space-between;
 	align-items: center;
-	gap: 40px;
+	gap: 10px;
+}
+.header-controls {
+	display: flex;
+	gap: 6px;
+	flex-wrap: wrap;
+	max-width: 60%;
+	justify-content: flex-end;
 }
 </style>

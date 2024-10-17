@@ -8,7 +8,7 @@ const { items, active } = defineProps<{
 
 <template>
 	<div class="tabs">
-		<span
+		<div
 			v-for="tab in items"
 			:key="tab.id"
 			:class="{ active: tab.id === active }"
@@ -20,7 +20,7 @@ const { items, active } = defineProps<{
 			"
 		>
 			{{ tab.title }}
-		</span>
+		</div>
 	</div>
 	<div class="tab-content">
 		<template v-for="tab in items">
@@ -38,6 +38,7 @@ const { items, active } = defineProps<{
 	gap: 24px;
 	padding-bottom: 20px;
 	overflow-x: auto;
+	min-height: 54px;
 	min-height: max-content;
 	font-family: IBM Plex Sans;
 	user-select: none;
@@ -47,13 +48,13 @@ const { items, active } = defineProps<{
 	z-index: 1000;
 }
 
-.tabs span {
+.tabs div {
 	cursor: pointer;
 	font-size: 20px;
 	border-bottom: 2px solid transparent;
 }
 
-.tabs span.active {
+.tabs div.active {
 	color: var(--color-text-active);
 	border-color: var(--vt-c-blue);
 }
