@@ -1,9 +1,10 @@
 #ton-connect-button button {
-	background: linear-gradient(45deg, #9975ff36, #9975ff33);
+	background: transparent;
+	box-shadow: unset;
 	display: flex;
 	align-items: center;
-	gap: 10px;
 	color: var(--vt-c-purple);
+	padding: 0;
 }
 
 #ton-connect-button .go1140934594 {

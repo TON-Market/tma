@@ -6,6 +6,7 @@ import { VNumberInput } from 'vuetify/labs/VNumberInput';
 
 import BetTabs from './components/BetTabs.vue';
 
+import ChevronDown from '@/assets/icons/ChevronDown.vue';
 import Balance from '@/components/Balance.vue';
 import Image from '@/components/Image.vue';
 import { DepositStatus, useAccount } from '@/services/account';
@@ -95,21 +96,47 @@ const ticks = computed((): {} => {
 </script>
 
 <template>
-	<div class="event-title">
-		{{ event?.title }}
-	</div>
 	<div class="bet">
 		<div class="bet-controls">
-			<div style="display: flex; align-items: center; gap: 20px">
+			<div
+				style="
+					display: flex;
+					align-items: center;
+					gap: 10px;
+					text-transform: uppercase;
+					font-weight: 700;
+					font-size: 20px;
+				"
+			>
 				<Image
 					:width="40"
 					rounded
 					:url="bet?.logoLink"
 				/>
-				<span>{{ bet?.title }}</span>
+				<span style="font-weight: 700">{{ bet?.title }}/TON</span>
+			</div>
+			<div class="bet-buttons">
+				<v-btn
+					text="Buy"
+					variant="flat"
+					density="default"
+					@click="notifier.info('Soon...')"
+				/>
+
+				<v-btn
+					class="sell-btn"
+					variant="flat"
+					text="Sell"
+					density="default"
+					@click="notifier.info('Soon...')"
+				/>
+			</div>
+			<div class="bet-market">
+				<span style="font-weight: 700">Market</span>
+				<ChevronDown />
 			</div>
 			<div class="bet-controls-row">
-				<span>Available to trade</span>
+				<span style="font-weight: 700">Available to trade</span>
 				<Balance />
 			</div>
 			<div class="bet-controls-row">
@@ -124,7 +151,8 @@ const ticks = computed((): {} => {
 			<div class="bet-controls-row">
 				<v-slider
 					v-model:model-value="pct"
-					color="primary"
+					color="purple"
+					:thumb-size="10"
 					:max="100"
 					:ticks="ticks"
 					show-ticks="always"
@@ -134,12 +162,13 @@ const ticks = computed((): {} => {
 				/>
 			</div>
 			<div class="bet-controls-row">
-				<span>Avg price:</span>
+				<span style="font-weight: 700">Avg price:</span>
 				<span>soon...</span>
 			</div>
 			<div class="bet-controls-row">
 				<v-btn
-					text="Buy"
+					class="buy-bet-btn"
+					:text="`Buy ${bet?.title.toUpperCase()}`"
 					flat
 					variant="flat"
 					block
@@ -170,6 +199,7 @@ const ticks = computed((): {} => {
 	gap: 40px 20px;
 	justify-content: space-around;
 	color: var(--color-text-active);
+	padding-bottom: 30px;
 }
 
 .bet-controls {
@@ -179,13 +209,38 @@ const ticks = computed((): {} => {
 	gap: 14px;
 }
 
-.bet-controls .v-slider-track__tick-label {
-	font-size: 0.7em;
-}
-
 .bet-controls-row {
 	display: flex;
 	justify-content: space-between;
+}
+
+.bet-buttons {
+	display: flex;
+	gap: 4px;
+}
+
+.bet-buttons .v-btn {
+	flex-grow: 1;
+}
+
+.bet-market {
+	display: flex;
+	gap: 8px;
+	align-items: center;
+}
+
+.bet-buttons .v-btn.sell-btn {
+	background: #a290ff33 !important;
+	color: rgb(var(--v-theme-purple)) !important;
+}
+
+.buy-bet-btn {
+	padding: 18px;
+}
+
+.buy-bet-btn .v-btn__content {
+	line-height: 20px;
+	font-size: 14px;
 }
 
 .graph-demo {

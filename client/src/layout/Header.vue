@@ -4,9 +4,12 @@ import { TonConnectButton, useTonAddress, useTonConnectUI } from '@townsquarelab
 import Logo from '@/assets/icons/Logo.vue';
 import Balance from '@/components/Balance.vue';
 import { useAccount } from '@/services/account';
+import { useNotifier } from '@/services/notifier';
 import { useRedirect } from '@/shared/hooks/useRedirect';
 
 const [tonConnectUI] = useTonConnectUI();
+
+const notifier = useNotifier();
 
 const account = useAccount();
 const address = useTonAddress();
@@ -41,6 +44,8 @@ tonConnectUI.onStatusChange(async wallet => {
 				network: wallet.account.chain,
 			});
 		} catch {
+			notifier.error('Wallet validation failed...', 15000);
+			notifier.error('Please, try to make a transaction and connect wallet again.', 15000);
 			tonConnectUI.disconnect();
 		}
 	}
@@ -85,8 +90,15 @@ header {
 }
 .header-controls {
 	display: flex;
-	gap: 6px;
 	max-width: 60%;
 	justify-content: flex-end;
+
+	background: linear-gradient(45deg, #9975ff36, #9975ff33);
+	display: flex;
+	align-items: center;
+	color: var(--vt-c-purple);
+	border-radius: 100vh;
+
+	padding: 0 14px;
 }
 </style>

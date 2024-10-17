@@ -1,5 +1,8 @@
 <script setup lang="ts">
 import BackgroundImage from '@/components/BackgroundImage.vue';
+import { useNotifier } from '@/services/notifier';
+
+const notifier = useNotifier();
 
 const { text, image } = defineProps<{
 	text: string;
@@ -16,7 +19,7 @@ const { text, image } = defineProps<{
 			<p>{{ text }}</p>
 		</div>
 		<div class="controls">
-			<button>View</button>
+			<button @click="notifier.info('Soon...')">View</button>
 		</div>
 	</BackgroundImage>
 </template>
@@ -40,7 +43,7 @@ const { text, image } = defineProps<{
 	display: flex;
 	align-items: center;
 	width: 100%;
-	padding: 10px;
+	padding: 20px;
 }
 
 .card .text {
@@ -49,16 +52,18 @@ const { text, image } = defineProps<{
 }
 
 .text p {
-	width: 70%;
+	width: 90%;
 	overflow: hidden;
 	display: -webkit-box;
 	-webkit-line-clamp: 2;
 	line-clamp: 2;
 	-webkit-box-orient: vertical;
+	line-height: 19px;
 }
 
 .card .controls {
 	padding-top: 10px;
+	padding-bottom: 15px;
 	justify-content: flex-end;
 }
 
@@ -66,7 +71,7 @@ const { text, image } = defineProps<{
 	border: none;
 	background: #ffffff45;
 	border-radius: 10px;
-	padding: 6px 14px;
+	padding: 3px 14px;
 	color: inherit;
 	cursor: pointer;
 }

@@ -13,8 +13,12 @@ import NewsCard from './NewsCard.vue';
 			image="https://avatars.mds.yandex.net/i?id=2a0000019261eb4f40b26de8ad2a3f26cf01-1731823-fast-images&n=13"
 		/>
 		<NewsCard
-			text="New TON mini app is already here!"
+			text="New TON mini-app is already here!"
 			image="https://itzine.ru/wp-content/uploads/2020/02/image-86.png"
+		/>
+		<NewsCard
+			text="More news..."
+			image=""
 		/>
 	</div>
 </template>

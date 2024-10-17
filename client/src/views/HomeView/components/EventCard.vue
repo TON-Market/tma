@@ -2,11 +2,14 @@
 import Card from '@/components/Card.vue';
 import Collateral from '@/components/Collateral.vue';
 import type { Event } from '@/services/events';
+import { useNotifier } from '@/services/notifier';
 import { useRedirect } from '@/shared/hooks/useRedirect';
 
 const { event } = defineProps<{
 	event: Event;
 }>();
+
+const notifier = useNotifier();
 </script>
 
 <template>
@@ -33,9 +36,12 @@ const { event } = defineProps<{
 							variant="flat"
 							@click.stop="useRedirect('bet', { eventID: event.id, token: bet.token })"
 						/>
+
 						<v-btn
-							disabled
+							class="sell-btn"
+							variant="flat"
 							text="Sell"
+							@click="notifier.info('Soon...')"
 						/>
 					</div>
 				</div>
@@ -60,5 +66,11 @@ const { event } = defineProps<{
 	display: flex;
 	align-items: center;
 	gap: 6px;
+}
+
+.sell-btn {
+	background: #562aff;
+	opacity: 0.5 !important;
+	color: unset !important;
 }
 </style>

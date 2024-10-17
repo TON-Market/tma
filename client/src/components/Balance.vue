@@ -26,10 +26,8 @@ const account = useAccount();
 	align-items: center;
 	gap: 4px;
 
-	background: linear-gradient(45deg, #9975ff36, #9975ff33);
+	background: transparent;
 	border-radius: 100vh;
-	padding: 0 8px;
-
 	cursor: pointer;
 }
 </style>

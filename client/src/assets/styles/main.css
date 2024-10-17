@@ -28,3 +28,20 @@
 .v-data-table-header__content span {
 	font-weight: 700;
 }
+
+.v-slider-track__tick {
+	height: 8px !important;
+	top: -3px !important;
+	width: 2px !important;
+	background: rgb(var(--v-theme-purple)) !important;
+}
+
+.v-slider-track__tick-label {
+	font-size: 8px !important;
+	color: var(--color-text);
+	margin-top: 20px !important;
+}
+
+.v-slider-thumb {
+	margin-left: 6px;
+}

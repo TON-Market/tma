@@ -13,6 +13,7 @@ const themeSettingsDark: ThemeDefinition = {
 		'surface-mute': '#433b75',
 
 		primary: '#562aff',
+		purple: '#6A4DFF',
 
 		success: '#00D9A2',
 		error: '#FF4B61',
