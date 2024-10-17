@@ -18,4 +18,5 @@
 
 .v-btn__content {
 	text-transform: capitalize;
+	font-weight: 700;
 }

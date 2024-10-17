@@ -46,7 +46,7 @@ const { event } = defineProps<{
 
 <style scoped>
 .bets {
-	padding-left: 60px;
+	padding-left: 42px;
 	display: flex;
 	flex-direction: column;
 	gap: 10px;

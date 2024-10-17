@@ -78,7 +78,7 @@ function onPctUpdated(value: number) {
 const ticks = computed((): {} => {
 	const w = window.innerWidth;
 
-	return w > 400
+	return w > 420
 		? {
 				0: '0%',
 				25: '25%',
@@ -95,11 +95,11 @@ const ticks = computed((): {} => {
 </script>
 
 <template>
+	<div class="event-title">
+		{{ event?.title }}
+	</div>
 	<div class="bet">
 		<div class="bet-controls">
-			<div>
-				{{ event?.title }}
-			</div>
 			<div style="display: flex; align-items: center; gap: 20px">
 				<Image
 					:width="40"
@@ -159,6 +159,12 @@ const ticks = computed((): {} => {
 </template>
 
 <style scoped>
+.event-title {
+	color: var(--color-text-active);
+	font-weight: 700;
+	padding-bottom: 10px;
+}
+
 .bet {
 	display: flex;
 	gap: 40px 20px;
@@ -187,6 +193,7 @@ const ticks = computed((): {} => {
 	justify-content: center;
 	align-items: center;
 	position: relative;
+	max-width: 40%;
 }
 
 .graph-demo img {
