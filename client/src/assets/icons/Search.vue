@@ -1,7 +1,15 @@
+<script setup lang="ts">
+import { defineProps } from 'vue';
+
+const { size = 30 } = defineProps<{
+	size?: number;
+}>();
+</script>
+
 <template>
 	<svg
-		width="31"
-		height="30"
+		:width="size"
+		:height="size"
 		viewBox="0 0 31 30"
 		fill="none"
 		xmlns="http://www.w3.org/2000/svg"

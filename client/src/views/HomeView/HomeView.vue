@@ -53,7 +53,7 @@ function registerSearchElement() {
 			v-model:model-value="search"
 		>
 			<template #append-inner>
-				<Search />
+				<Search :size="24" />
 			</template>
 		</v-text-field>
 	</div>

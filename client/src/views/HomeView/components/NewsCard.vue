@@ -75,7 +75,7 @@ const { text, image } = defineProps<{
 .controls button {
 	border: none;
 	background: #ffffff45;
-	border-radius: 10px;
+	border-radius: 18px;
 	padding: 3px 14px;
 	color: inherit;
 	cursor: pointer;

@@ -47,3 +47,11 @@
 	height: unset !important;
 	padding: 3px 12px 5px 11px !important;
 }
+
+.v-field__outline {
+	display: none !important;
+}
+
+.v-input__control .v-field {
+	padding: 0 16px;
+}
