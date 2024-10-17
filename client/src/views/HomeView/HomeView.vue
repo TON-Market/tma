@@ -1,11 +1,12 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue';
+import { nextTick, onMounted, ref } from 'vue';
 
 import Events from './components/Events.vue';
 import News from './components/News.vue';
 
 import Search from '@/assets/icons/Search.vue';
 import { useEvents } from '@/services/events';
+import { useNavigation } from '@/services/navigation';
 
 const scrollElement = ref();
 const scrollContent = ref();
@@ -29,11 +30,23 @@ events.$onAction(async act => {
 	}
 });
 
+const navigation = useNavigation();
+const searchElement = ref();
 const search = ref('');
+
+function registerSearchElement() {
+	nextTick(() => {
+		if (searchElement.value) navigation.registerSearchElement(searchElement.value);
+	});
+}
 </script>
 
 <template>
-	<div class="search">
+	<div
+		ref="searchElement"
+		@vue:mounted="registerSearchElement"
+		class="search"
+	>
 		<v-text-field
 			rounded="xl"
 			placeholder="Search..."
