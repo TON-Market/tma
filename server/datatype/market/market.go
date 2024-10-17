@@ -151,12 +151,12 @@ func (m *Market) makeSnapshot(ctx context.Context) error {
 	for id, state := range eventStates {
 		event, err := m.persistor.getCopyByID(ctx, id)
 		if err != nil && !errors.Is(err, ErrEventNotExist) {
-			log.Printf(fmt.Sprintf("snapshot failed: %s\n", err.Error()))
+			log.Printf(fmt.Sprintf("snapshot failed: %s\n\n", err.Error()))
 			continue
 		}
 
 		if len(state.betStateMap) != len(event.BetMap) {
-			log.Printf("snapshot failed: persist and runtime bet maps not equal\n")
+			log.Printf("snapshot failed: persist and runtime bet maps not equal\n\n")
 			continue
 		}
 
@@ -257,7 +257,7 @@ type DepositReq struct {
 func (m *Market) Deposit(_ context.Context, dr *DepositReq) error {
 	dr.Time = time.Now()
 	m.ch <- dr
-	log.Printf("[INFO] deposit request registered, id: %s\n", dr.ID.String())
+	log.Printf("[INFO] deposit request registered, id: %s\n\n", dr.ID.String())
 	return nil
 }
 
@@ -269,7 +269,7 @@ func (m *Market) verifyIncomeTransactions() {
 
 		if dr.DepositStatus == ERROR {
 			if err := m.persistor.declineDeal(ctx, dr.ID); err != nil {
-				log.Printf("%v, id: %s: err decline deal: %v\n", ErrVerifyTransaction, dr.ID.String(), err)
+				log.Printf("%v, id: %s: err decline deal: %v\n\n", ErrVerifyTransaction, dr.ID.String(), err)
 			}
 			continue
 		}
@@ -281,12 +281,12 @@ func (m *Market) verifyIncomeTransactions() {
 
 		userRawAddress, err := m.persistor.getUserAddressByUncheckedDealID(ctx, dr.ID)
 		if err != nil {
-			log.Printf("%v, id: %s: %v\n", ErrVerifyTransaction, dr.ID.String(), err)
+			log.Printf("%v, id: %s: %v\n\n", ErrVerifyTransaction, dr.ID.String(), err)
 			continue
 		}
 		accountID, err := ton.ParseAccountID(userRawAddress)
 		if err != nil {
-			log.Printf("%v, id: %s: can't parse address: %s: %v\n", ErrVerifyTransaction, dr.ID.String(), userRawAddress, err)
+			log.Printf("%v, id: %s: can't parse address: %s: %v\n\n", ErrVerifyTransaction, dr.ID.String(), userRawAddress, err)
 			continue
 		}
 
@@ -305,18 +305,18 @@ func (m *Market) verifyIncomeTransactions() {
 		trxList, err := getLastTransactions()
 
 		if err != nil {
-			log.Printf("%v, id: %s: user_raw_address: %s: %v\n", ErrVerifyTransaction, dr.ID.String(), userRawAddress, err)
+			log.Printf("%v, id: %s: user_raw_address: %s: %v\n\n", ErrVerifyTransaction, dr.ID.String(), userRawAddress, err)
 			continue
 		}
 
 		deal, err := m.iterateTransactionList(ctx, dr, userRawAddress, trxList)
 		if err != nil {
-			log.Printf("%v\n", err)
+			log.Printf("%v\n\n", err)
 			continue
 		}
 
 		if err := m.sendToSocket(ctx, deal.EventID); err != nil {
-			log.Printf("%v\n", err)
+			log.Printf("%v\n\n", err)
 			continue
 		}
 	}
@@ -328,7 +328,7 @@ func (m *Market) iterateTransactionList(ctx context.Context, dr *DepositReq, use
 	for _, trx := range trxList {
 		var t wallet.TextComment
 		if err := tlb.Unmarshal((*boc.Cell)(&trx.Msgs.OutMsgs.Values()[0].Value.Body.Value), &t); err != nil {
-			log.Printf("[WARNING] verify transaction, id: %s, user_raw_address: %s, can't unmarshal boc: %v\n", dr.ID.String(), userRawAddress, err)
+			log.Printf("[WARNING] verify transaction, id: %s, user_raw_address: %s, can't unmarshal boc: %v\n\n", dr.ID.String(), userRawAddress, err)
 			continue
 		}
 

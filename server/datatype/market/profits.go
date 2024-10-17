@@ -107,7 +107,7 @@ func (m *Market) profitUsers(ctx context.Context, userTotalReturnMap UserTotalRe
 
 		log.Printf("[INFO] trying send user address: %s\n\n", address)
 		if err := trySend(); err != nil {
-			log.Printf("[ERROR] profit users, close event id: %s, send simple transfer failed for user: %s, has to get: %v err: %s\n",
+			log.Printf("[ERROR] profit users, close event id: %s, send simple transfer failed for user: %s, has to get: %v err: %s\n\n",
 				eventId.String(), recepient, grams, err.Error())
 		}
 	}
