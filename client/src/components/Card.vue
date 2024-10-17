@@ -6,12 +6,12 @@ import Image from '@/components/Image.vue';
 
 interface Card {
 	expandable?: boolean;
-	logo?: string;
+	logoLink?: string;
 	title?: string;
 	noLogo?: boolean;
 }
 
-const { logo, title, expandable } = defineProps<Card>();
+const { logoLink, title, expandable } = defineProps<Card>();
 
 const open = ref(!expandable);
 </script>
@@ -37,7 +37,7 @@ const open = ref(!expandable);
 					<slot name="icon">
 						<Image
 							rounded
-							:url="logo"
+							:url="logoLink"
 							:width="30"
 						/>
 					</slot>

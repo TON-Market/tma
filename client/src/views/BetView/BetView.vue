@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { CHAIN, useTonConnectModal, useTonConnectUI } from '@townsquarelabs/ui-vue';
 import { storeToRefs } from 'pinia';
-import { computed, ref } from 'vue';
+import { ref } from 'vue';
 import { VNumberInput } from 'vuetify/labs/VNumberInput';
 
 import BetTabs from './components/BetTabs.vue';
