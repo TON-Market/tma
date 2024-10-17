@@ -50,7 +50,7 @@ const open = ref(!expandable);
 						},
 					]"
 				>
-					<p>{{ title }}</p>
+					<p class="title-text">{{ title }}</p>
 				</div>
 			</div>
 			<slot name="info"></slot>
@@ -114,7 +114,7 @@ const open = ref(!expandable);
 	-webkit-line-clamp: 2;
 	line-clamp: 2;
 	-webkit-box-orient: vertical;
-	font-weight: 500;
+	font-weight: 700;
 }
 
 .grow {
