@@ -70,6 +70,8 @@ func (m *Market) calcUsersProfit(ctx context.Context, id uuid.UUID, winToken tok
 		userTotalReturn := profit + float64(asset.CollateralStaked)
 		returnGrams := tlb.Grams(userTotalReturn) - baseFee
 
+		log.Printf("[INFO] user_addr: %s, return_grams: %d\n\n", asset.UserRawAddress, returnGrams)
+
 		if returnGrams < 0 {
 			continue
 		}
@@ -103,9 +105,10 @@ func (m *Market) profitUsers(ctx context.Context, userTotalReturnMap UserTotalRe
 			return ErrCantSendSimpleTransfer
 		}
 
-		log.Print("[INFO] trying send user address: %s\n", address)
+		log.Printf("[INFO] trying send user address: %s\n\n", address)
 		if err := trySend(); err != nil {
-			log.Printf("[ERROR] profit users, close event id: %s, send simple transfer failed for user: %s, has to get: %v err: %s\n", eventId.String(), recepient, grams, err.Error())
+			log.Printf("[ERROR] profit users, close event id: %s, send simple transfer failed for user: %s, has to get: %v err: %s\n",
+				eventId.String(), recepient, grams, err.Error())
 		}
 	}
 	return nil
