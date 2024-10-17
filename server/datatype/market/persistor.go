@@ -156,6 +156,15 @@ func (p *persistor) verifyDealAndGet(ctx context.Context, id uuid.UUID) (*Deal, 
 	return &deal, nil
 }
 
+func (p *persistor) declineDeal(ctx context.Context, id uuid.UUID) error {
+	q := `UPDATE deals SET deal_status = $1 WHERE id = $2`
+
+	if _, err := p.pool.Exec(ctx, q, Declined, id); err != nil {
+		return fmt.Errorf("decline deal failed: %w", err)
+	}
+	return nil
+}
+
 func (p *persistor) deleteDeal(ctx context.Context, id uuid.UUID) error {
 	q := `DELETE FROM deals WHERE id = $1`
 

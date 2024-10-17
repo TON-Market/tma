@@ -268,8 +268,8 @@ func (m *Market) verifyIncomeTransactions() {
 		ctx := context.TODO()
 
 		if dr.DepositStatus == ERROR {
-			if err := m.persistor.deleteDeal(ctx, dr.ID); err != nil {
-				log.Printf("%v, id: %s: err delete unsigned transaction: %v\n", ErrVerifyTransaction, dr.ID.String(), err)
+			if err := m.persistor.declineDeal(ctx, dr.ID); err != nil {
+				log.Printf("%v, id: %s: err decline deal: %v\n", ErrVerifyTransaction, dr.ID.String(), err)
 			}
 			continue
 		}

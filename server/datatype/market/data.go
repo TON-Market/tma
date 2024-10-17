@@ -68,6 +68,7 @@ type DealStatus int
 const (
 	Unchecked DealStatus = iota
 	Verified
+	Declined
 )
 
 // Deal persist user deal
