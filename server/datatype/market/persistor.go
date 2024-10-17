@@ -72,6 +72,30 @@ var (
 	ErrPersistDeal = errors.New("persist deal failed")
 )
 
+func (p *persistor) getPendingDeals(ctx context.Context) ([]*Deal, error) {
+	q := `SELECT id, event_id, token, collateral, size, user_raw_addr, deal_status
+          FROM deals WHERE deal_status = 0`
+
+	dealList := make([]*Deal, 0)
+	rows, err := p.pool.Query(ctx, q)
+	if err != nil {
+		return nil, fmt.Errorf("get pending deals failed: %w", err)
+	}
+
+	defer rows.Close()
+
+	for rows.Next() {
+		var deal Deal
+		if err = rows.Scan(&deal.ID, &deal.EventID, &deal.Collateral, &deal.Size, &deal.UserRawAddr, &deal.DealStatus); err != nil {
+			return nil, fmt.Errorf("get pending deals failed: %w", err)
+		}
+
+		dealList = append(dealList, &deal)
+	}
+
+	return dealList, nil
+}
+
 func (p *persistor) saveDeal(ctx context.Context, d *Deal) error {
 	tx, err := p.pool.Begin(ctx)
 	if err != nil {

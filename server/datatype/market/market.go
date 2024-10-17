@@ -66,6 +66,7 @@ func (m *Market) AddEvent(ctx context.Context, e *Event) error {
 
 func (m *Market) Start(ctx context.Context) {
 	ticker := time.NewTicker(5 * time.Second)
+	retryTicker := time.NewTicker(1 * time.Minute)
 
 	for i := 0; i < 1; i++ {
 		go m.verifyIncomeTransactions()
@@ -79,6 +80,33 @@ func (m *Market) Start(ctx context.Context) {
 		}
 		defer ticker.Stop()
 	}()
+
+	go func() {
+		for range retryTicker.C {
+			if err := m.verifyPending(ctx); err != nil {
+				log.Printf("[ERROR]: %s\n\n", err.Error())
+			}
+		}
+	}()
+}
+
+func (m *Market) verifyPending(ctx context.Context) error {
+	pendingDeals, err := m.persistor.getPendingDeals(ctx)
+	if err != nil {
+		return fmt.Errorf("verify pending deals failed: %w", err)
+	}
+
+	for _, deal := range pendingDeals {
+
+		if err = m.Deposit(ctx, &DepositReq{
+			deal.ID,
+			OK,
+			time.Now(),
+		}); err != nil {
+			log.Printf("[ERROR] retry deposit for dealID: %s failed: %w\n\n", deal.ID.String(), err)
+		}
+	}
+	return nil
 }
 
 func (m *Market) ReadFromSnapshot(_ context.Context, tag Tag, page int) ([]EventDTO, int, error) {
@@ -151,12 +179,12 @@ func (m *Market) makeSnapshot(ctx context.Context) error {
 	for id, state := range eventStates {
 		event, err := m.persistor.getCopyByID(ctx, id)
 		if err != nil && !errors.Is(err, ErrEventNotExist) {
-			log.Printf(fmt.Sprintf("snapshot failed: %s\n\n", err.Error()))
+			log.Printf("[ERROR] snapshot failed: %s\n\n", err.Error())
 			continue
 		}
 
 		if len(state.betStateMap) != len(event.BetMap) {
-			log.Printf("snapshot failed: persist and runtime bet maps not equal\n\n")
+			log.Printf("[ERROR] snapshot failed: persist and runtime bet maps not equal\n\n")
 			continue
 		}
 
@@ -226,7 +254,7 @@ func GetMarket() *Market {
 		singleton = &Market{
 			w,
 			make(chan *EventDTO),
-			make(chan *DepositReq, 100),
+			make(chan *DepositReq, 10000),
 			client,
 			&snapshot{
 				sync.RWMutex{},
@@ -269,7 +297,7 @@ func (m *Market) verifyIncomeTransactions() {
 
 		if dr.DepositStatus == ERROR {
 			if err := m.persistor.declineDeal(ctx, dr.ID); err != nil {
-				log.Printf("%v, id: %s: err decline deal: %v\n\n", ErrVerifyTransaction, dr.ID.String(), err)
+				log.Printf("[INFO] %v, id: %s: err decline deal: %v\n\n", ErrVerifyTransaction, dr.ID.String(), err)
 			}
 			continue
 		}
@@ -302,21 +330,22 @@ func (m *Market) verifyIncomeTransactions() {
 			return nil, fmt.Errorf("transaction not found: %v", err)
 		}
 
+		log.Printf("[INFO] getting transaction list for user: %s\n\n", userRawAddress)
 		trxList, err := getLastTransactions()
 
 		if err != nil {
-			log.Printf("%v, id: %s: user_raw_address: %s: %v\n\n", ErrVerifyTransaction, dr.ID.String(), userRawAddress, err)
+			log.Printf("[ERROR] %v, id: %s: user_raw_address: %s: %v\n\n", ErrVerifyTransaction, dr.ID.String(), userRawAddress, err)
 			continue
 		}
 
 		deal, err := m.iterateTransactionList(ctx, dr, userRawAddress, trxList)
 		if err != nil {
-			log.Printf("%v\n\n", err)
+			log.Printf("[ERROR] %v\n\n", err)
 			continue
 		}
 
 		if err := m.sendToSocket(ctx, deal.EventID); err != nil {
-			log.Printf("%v\n\n", err)
+			log.Printf("[ERROR] %v\n\n", err)
 			continue
 		}
 	}
@@ -340,7 +369,7 @@ func (m *Market) iterateTransactionList(ctx context.Context, dr *DepositReq, use
 				return nil, fmt.Errorf("iterate transaction list failed: id: %s: user_raw_address: %s: %w", dr.ID.String(), userRawAddress, err)
 			}
 
-			if err := m.runtimer.deposit(ctx, deal); err != nil {
+			if err = m.runtimer.deposit(ctx, deal); err != nil {
 				return nil, fmt.Errorf("iterate transaction list failed: id: %s: user_raw_address: %s: %w", dr.ID.String(), userRawAddress, err)
 			}
 			return deal, nil
