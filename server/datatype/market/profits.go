@@ -93,9 +93,9 @@ func (m *Market) profitUsers(ctx context.Context, userTotalReturnMap UserTotalRe
 		}
 
 		trySend := func() error {
-			for i := 0; i < 10; i++ {
+			for i := 0; i < 20; i++ {
 				if err := m.wallet.Send(ctx, message); err != nil {
-					time.Sleep(7 * time.Second)
+					time.Sleep(10 * time.Second)
 					continue
 				}
 				return nil
@@ -103,6 +103,7 @@ func (m *Market) profitUsers(ctx context.Context, userTotalReturnMap UserTotalRe
 			return ErrCantSendSimpleTransfer
 		}
 
+		log.Print("[INFO] trying send user address: %s\n", address)
 		if err := trySend(); err != nil {
 			log.Printf("[ERROR] profit users, close event id: %s, send simple transfer failed for user: %s, has to get: %v err: %s\n", eventId.String(), recepient, grams, err.Error())
 		}

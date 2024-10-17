@@ -41,8 +41,8 @@ func (es *eventStorage) deleteEvent(_ context.Context, id uuid.UUID) error {
 	es.Lock()
 	defer es.Unlock()
 
-	if _, ok := es.m[id]; ok {
-		return fmt.Errorf("%v: %v: %s", ErrSaveEvent, ErrEventAlreadyExist, id.String())
+	if _, ok := es.m[id]; !ok {
+		return fmt.Errorf("%v: %v: %s", ErrSaveEvent, ErrEventNotExist, id.String())
 	}
 
 	delete(es.m, id)
