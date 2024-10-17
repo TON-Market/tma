@@ -37,6 +37,18 @@ func (es *eventStorage) saveEvent(_ context.Context, e *Event) error {
 	return nil
 }
 
+func (es *eventStorage) deleteEvent(_ context.Context, id uuid.UUID) error {
+	es.Lock()
+	defer es.Unlock()
+
+	if _, ok := es.m[id]; ok {
+		return fmt.Errorf("%v: %v: %s", ErrSaveEvent, ErrEventAlreadyExist, id.String())
+	}
+
+	delete(es.m, id)
+	return nil
+}
+
 var ErrGetByIdEvent = errors.New("get by id event failed")
 
 func (es *eventStorage) getCopyByID(_ context.Context, id uuid.UUID) (Event, error) {
