@@ -66,9 +66,8 @@ func (m *Market) AddEvent(ctx context.Context, e *Event) error {
 
 func (m *Market) Start(ctx context.Context) {
 	ticker := time.NewTicker(5 * time.Second)
-	retryTicker := time.NewTicker(1 * time.Minute)
 
-	for i := 0; i < 1; i++ {
+	for i := 0; i < 3; i++ {
 		go m.verifyIncomeTransactions()
 	}
 
@@ -80,33 +79,6 @@ func (m *Market) Start(ctx context.Context) {
 		}
 		defer ticker.Stop()
 	}()
-
-	go func() {
-		for range retryTicker.C {
-			if err := m.verifyPending(ctx); err != nil {
-				log.Printf("[ERROR]: %s\n\n", err.Error())
-			}
-		}
-	}()
-}
-
-func (m *Market) verifyPending(ctx context.Context) error {
-	pendingDeals, err := m.persistor.getPendingDeals(ctx)
-	if err != nil {
-		return fmt.Errorf("verify pending deals failed: %w", err)
-	}
-
-	for _, deal := range pendingDeals {
-
-		if err = m.Deposit(ctx, &DepositReq{
-			deal.ID,
-			OK,
-			time.Now(),
-		}); err != nil {
-			log.Printf("[ERROR] retry deposit for dealID: %s failed: %w\n\n", deal.ID.String(), err)
-		}
-	}
-	return nil
 }
 
 func (m *Market) ReadFromSnapshot(_ context.Context, tag Tag, page int) ([]EventDTO, int, error) {
@@ -330,7 +302,7 @@ func (m *Market) verifyIncomeTransactions() {
 			return nil, fmt.Errorf("transaction not found: %v", err)
 		}
 
-		log.Printf("[INFO] getting transaction list for user: %s\n\n", userRawAddress)
+		log.Printf("\n[INFO] getting transaction list for user: %s\n\n", userRawAddress)
 		trxList, err := getLastTransactions()
 
 		if err != nil {

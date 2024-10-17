@@ -84,32 +84,38 @@ func (m *Market) calcUsersProfit(ctx context.Context, id uuid.UUID, winToken tok
 var ErrCantSendSimpleTransfer = errors.New("can't send simple transfer")
 
 func (m *Market) profitUsers(ctx context.Context, userTotalReturnMap UserTotalReturnMap, eventId uuid.UUID) error {
+	messages := make([]wallet.Sendable, 0)
 	for address, grams := range userTotalReturnMap {
 		recepient := ton.MustParseAccountID(address)
 
-		message := wallet.SimpleTransfer{
+		m := wallet.SimpleTransfer{
 			Amount:     grams,
 			Address:    recepient,
 			Comment:    "profit: " + eventId.String(),
-			Bounceable: false,
+			Bounceable: true,
 		}
 
-		trySend := func() error {
-			for i := 0; i < 20; i++ {
-				if err := m.wallet.Send(ctx, message); err != nil {
-					time.Sleep(10 * time.Second)
-					continue
-				}
-				return nil
-			}
-			return ErrCantSendSimpleTransfer
-		}
-
-		log.Printf("[INFO] trying send user address: %s\n\n", address)
-		if err := trySend(); err != nil {
-			log.Printf("[ERROR] profit users, close event id: %s, send simple transfer failed for user: %s, has to get: %v err: %s\n\n",
-				eventId.String(), recepient, grams, err.Error())
-		}
+		messages = append(messages, m)
 	}
+
+	trySend := func() error {
+		for i := 0; i < 10; i++ {
+			if err := m.wallet.Send(ctx, messages...); err != nil {
+				time.Sleep(20 * time.Second)
+				continue
+			}
+			return nil
+		}
+		return ErrCantSendSimpleTransfer
+	}
+
+	for _, mi := range messages {
+		log.Printf("[INFO] trying send messages to user: %s, has to get: %v\n", mi.(wallet.SimpleTransfer).Address.ToRaw(), mi.(wallet.SimpleTransfer).Amount)
+	}
+
+	if err := trySend(); err != nil {
+		log.Printf("[ERROR] profit users, close event id: %s\n\n", eventId.String())
+	}
+
 	return nil
 }
