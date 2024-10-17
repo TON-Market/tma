@@ -20,7 +20,7 @@ var (
 	singleton *pgxpool.Pool
 )
 
-const dbUrl = "postgresql://postgres:password@localhost:5432/tma"
+const dbUrl = "postgresql://postgres:password@database/tma"
 
 func Get() *pgxpool.Pool {
 	once.Do(func() {
