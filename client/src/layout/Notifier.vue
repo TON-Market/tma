@@ -45,7 +45,7 @@ const { hide } = notifier;
 	right: 0;
 	padding: 8px;
 	z-index: 2000;
-	max-width: 40%;
+	max-width: 80%;
 	margin: 0 auto;
 	flex-direction: column;
 	gap: 10px;
