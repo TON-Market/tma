@@ -27,9 +27,9 @@ func (m *Market) CloseEvent(ctx context.Context, id uuid.UUID, winToken token.To
 		return fmt.Errorf("close event failed: %w", err)
 	}
 
-	if err = m.persistor.deleteAssets(ctx, id); err != nil {
-		return fmt.Errorf("delete assets failed: %w", err)
-	}
+	//if err = m.persistor.deleteAssets(ctx, id); err != nil {
+	//	return fmt.Errorf("delete assets failed: %w", err)
+	//}
 
 	if err = m.persistor.deleteEvent(ctx, id); err != nil {
 		return fmt.Errorf("delete event failed: %w", err)
