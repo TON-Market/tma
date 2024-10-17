@@ -4,6 +4,7 @@ import { onMounted, ref } from 'vue';
 import Events from './components/Events.vue';
 import News from './components/News.vue';
 
+import Search from '@/assets/icons/Search.vue';
 import { useEvents } from '@/services/events';
 
 const scrollElement = ref();
