@@ -44,13 +44,12 @@ interface Account {
 export const useAccount = defineStore('account', {
 	state: (): Account => ({
 		address: null,
-		balance: 10.0123,
+		balance: null,
 		assets: [],
 		total: '',
 	}),
 	actions: {
 		async getBalance() {
-			return;
 			if (!this.address) {
 				this.balance = null;
 				return;
