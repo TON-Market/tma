@@ -90,16 +90,13 @@ header {
 }
 .header-controls {
 	display: flex;
-	max-width: 60%;
 	justify-content: flex-end;
-
 	background: linear-gradient(45deg, #9975ff36, #9975ff33);
 	display: flex;
 	align-items: center;
 	color: var(--vt-c-purple);
 	border-radius: 100vh;
-
-	padding: 0 14px;
+	padding: 4px 14px;
 	gap: 6px;
 }
 </style>

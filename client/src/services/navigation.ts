@@ -1,5 +1,7 @@
 import { defineStore } from 'pinia';
 
+import { useRedirect } from '@/shared/hooks/useRedirect';
+
 interface Navigation {
 	searchElement: HTMLElement | null;
 	searchFocused: boolean;
@@ -23,7 +25,10 @@ export const useNavigation = defineStore('navigation', {
 		},
 		toSearch() {
 			// this.searchElement?.scrollIntoView({ behavior: 'smooth' });
-			this.searchElement?.focus();
+			useRedirect('home');
+			setTimeout(() => {
+				this.searchElement?.focus();
+			}, 100);
 		},
 	},
 });

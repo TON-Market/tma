@@ -5,12 +5,14 @@
 	align-items: center;
 	color: var(--vt-c-purple);
 	padding: 0;
+	height: unset;
 }
 
 #ton-connect-button .go1140934594 {
 	color: var(--vt-c-purple) !important;
 	font-size: 12px !important;
 	font-weight: 400;
+	white-space: nowrap;
 }
 
 .go3974562317 {
