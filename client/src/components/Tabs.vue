@@ -36,6 +36,7 @@ const { items, active } = defineProps<{
 .tabs {
 	display: flex;
 	gap: 24px;
+	padding: 0 10px;
 	padding-bottom: 20px;
 	overflow-x: auto;
 	min-height: 54px;
