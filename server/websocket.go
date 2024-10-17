@@ -1,42 +1,36 @@
 package main
 
 import (
-	"log"
-	"sync"
-
 	"github.com/TON-Market/tma/server/datatype/market"
 	"github.com/labstack/echo/v4"
 	"golang.org/x/net/websocket"
+	"sync"
 )
 
 type socket struct {
 	wsCh    chan *market.EventDTO
 	clients map[*websocket.Conn]bool
-	mu      sync.RWMutex
+	mu      sync.Mutex
 }
 
 func newSocket() *socket {
 	return &socket{
-		wsCh:    make(chan *market.EventDTO, 100),
+		wsCh:    market.GetMarket().WsCh,
 		clients: make(map[*websocket.Conn]bool),
+		mu:      sync.Mutex{},
 	}
 }
 
 func (h *socket) broadcastEvent(event *market.EventDTO) {
-	h.mu.RLock()
-	defer h.mu.RUnlock()
+	h.mu.Lock()
+	defer h.mu.Unlock()
 
 	for client := range h.clients {
-		go func(c *websocket.Conn) {
-			err := websocket.JSON.Send(c, event)
-			if err != nil {
-				log.Printf("Ошибка отправки клиенту: %v", err)
-				h.mu.Lock()
-				c.Close()
-				delete(h.clients, c)
-				h.mu.Unlock()
-			}
-		}(client)
+		err := websocket.JSON.Send(client, event)
+		if err != nil {
+			client.Close()
+			delete(h.clients, client)
+		}
 	}
 }
 
@@ -52,9 +46,8 @@ func (h *socket) updateEvent(c echo.Context) error {
 			h.mu.Unlock()
 			ws.Close()
 		}()
-
-		for event := range h.wsCh {
-			h.broadcastEvent(event)
+		for e := range h.wsCh {
+			h.broadcastEvent(e)
 		}
 	}).ServeHTTP(c.Response(), c.Request())
 	return nil
