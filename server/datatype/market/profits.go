@@ -6,10 +6,10 @@ import (
 	"fmt"
 	"github.com/TON-Market/tma/server/datatype/token"
 	"github.com/google/uuid"
-	log "github.com/sirupsen/logrus"
 	"github.com/tonkeeper/tongo/tlb"
 	"github.com/tonkeeper/tongo/ton"
 	"github.com/tonkeeper/tongo/wallet"
+	"log"
 	"time"
 )
 
