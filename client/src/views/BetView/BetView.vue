@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { CHAIN, useTonConnectModal, useTonConnectUI } from '@townsquarelabs/ui-vue';
 import { storeToRefs } from 'pinia';
-import { ref } from 'vue';
+import { computed, ref } from 'vue';
 import { VNumberInput } from 'vuetify/labs/VNumberInput';
 
 import BetTabs from './components/BetTabs.vue';
@@ -27,7 +27,7 @@ const { eventID, token } = defineProps<{
 const events = useEvents();
 events.select(eventID);
 const { current: event } = storeToRefs(events);
-const bet = ref(event.value?.bets.find(it => it.token === token));
+const bet = computed(() => event.value?.bets.find(it => it.token === token));
 
 async function pay() {
 	if (!TonConnectUI.connected) {
