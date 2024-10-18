@@ -55,7 +55,7 @@ func main() {
 		},
 	}
 
-	log.Fatal(s.ListenAndServeTLS("server.crt", "server.key"))
+	log.Fatal(s.ListenAndServeTLS("./server.crt", "./server.key"))
 }
 
 func testData() {
