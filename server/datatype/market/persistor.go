@@ -104,8 +104,8 @@ func (p *persistor) saveDeal(ctx context.Context, d *Deal) error {
 
 	defer tx.Rollback(ctx)
 
-	dq := `INSERT INTO public.deals (id, event_id, token, collateral, size, user_raw_addr, deal_status)
-          VALUES ($1, $2, $3, $4, $5, $6, $7)`
+	dq := `INSERT INTO public.deals (id, event_id, token, collateral, size, user_raw_addr, deal_status, attempts)
+          VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`
 
 	udq := `INSERT INTO public.user_deals (user_raw_addr, deal_id)
             VALUES ($1, $2)`

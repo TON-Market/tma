@@ -30,6 +30,7 @@ create table if not exists deals
             references users
             on delete cascade,
     deal_status   integer default 0 not null
+	attempts integer default 0
 );
 
 create table if not exists user_deals

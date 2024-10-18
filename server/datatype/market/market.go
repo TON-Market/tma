@@ -40,6 +40,7 @@ func (m *Market) SaveDealUnchecked(ctx context.Context, d *Deal) error {
 		return ErrEventClosed
 	}
 	d.DealStatus = Unchecked
+	d.Attempts = 0
 	if err := m.persistor.saveDeal(ctx, d); err != nil {
 		return fmt.Errorf("market save deal unchecked failed: %v", err)
 	}

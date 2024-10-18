@@ -1,16 +1,5 @@
 package main
 
-import (
-	"context"
-	"github.com/google/uuid"
-	"github.com/tonkeeper/tongo/boc"
-	"github.com/tonkeeper/tongo/liteapi"
-	"github.com/tonkeeper/tongo/tlb"
-	"github.com/tonkeeper/tongo/ton"
-	"github.com/tonkeeper/tongo/wallet"
-	"log"
-)
-
 //func main() {
 //tongoClient, err := liteapi.NewClientWithDefaultMainnet()
 //if err != nil {
@@ -59,50 +48,50 @@ import (
 //fmt.Printf("Account status: %v\nBalance: %v\n", state.Account.Status(), state.Account.Account.Storage.Balance.Grams)
 //}
 
-const SEED = "example consider fiscal mail guitar tiger duck exhibit ancient series differ wealth mix kitchen cactus upgrade unable yellow impact confirm denial mesh during dove"
-const my_ton_keeper_addr = "UQBbRSVWRlRH0D_OJ2pzj_Kaoeo5_Q3F-6GhDayX044Xr1fU"
-const sultan_ton_addr = "UQCh7h4Yx13eloWxHvQrerioosDDlp8WYRDH3sj6U3FCtZW5"
-const gleb_addr = "UQCc34X8ziXMgJyhmpZqgj-xX92h8Hfn-bfmT3gOSaDaacTi"
-
-func main() {
-	ctx := context.Background()
-
-	client, err := liteapi.NewClientWithDefaultMainnet()
-	if err != nil {
-		log.Fatalf("Unable to create lite client: %v", err)
-	}
-
-	pk, err := wallet.SeedToPrivateKey(SEED)
-	if err != nil {
-		log.Fatalln(err.Error())
-	}
-
-	w, err := wallet.New(pk, wallet.HighLoadV2R2, client)
-	if err != nil {
-		log.Fatalln(err)
-	}
-
-	recepient, err := ton.AccountIDFromBase64Url(gleb_addr)
-	if err != nil {
-		log.Fatalln(err)
-	}
-
-	m := wallet.SimpleTransfer{
-		Amount:     1000000000,
-		Address:    recepient,
-		Comment:    uuid.NewString(),
-		Bounceable: false,
-	}
-
-	err = w.Send(ctx, m)
-	if err != nil {
-		log.Fatalln(err)
-	}
-
-	body := boc.NewCell()
-	_ = tlb.Marshal(body, wallet.TextComment(uuid.NewString()))
-
-}
+//const SEED = "example consider fiscal mail guitar tiger duck exhibit ancient series differ wealth mix kitchen cactus upgrade unable yellow impact confirm denial mesh during dove"
+//const my_ton_keeper_addr = "UQBbRSVWRlRH0D_OJ2pzj_Kaoeo5_Q3F-6GhDayX044Xr1fU"
+//const sultan_ton_addr = "UQCh7h4Yx13eloWxHvQrerioosDDlp8WYRDH3sj6U3FCtZW5"
+//const gleb_addr = "UQCc34X8ziXMgJyhmpZqgj-xX92h8Hfn-bfmT3gOSaDaacTi"
+//
+//func main() {
+//	ctx := context.Background()
+//
+//	client, err := liteapi.NewClientWithDefaultMainnet()
+//	if err != nil {
+//		log.Fatalf("Unable to create lite client: %v", err)
+//	}
+//
+//	pk, err := wallet.SeedToPrivateKey(SEED)
+//	if err != nil {
+//		log.Fatalln(err.Error())
+//	}
+//
+//	w, err := wallet.New(pk, wallet.HighLoadV2R2, client)
+//	if err != nil {
+//		log.Fatalln(err)
+//	}
+//
+//	recepient, err := ton.AccountIDFromBase64Url(gleb_addr)
+//	if err != nil {
+//		log.Fatalln(err)
+//	}
+//
+//	m := wallet.SimpleTransfer{
+//		Amount:     1000000000,
+//		Address:    recepient,
+//		Comment:    uuid.NewString(),
+//		Bounceable: false,
+//	}
+//
+//	err = w.Send(ctx, m)
+//	if err != nil {
+//		log.Fatalln(err)
+//	}
+//
+//	body := boc.NewCell()
+//	_ = tlb.Marshal(body, wallet.TextComment(uuid.NewString()))
+//
+//}
 
 //func main() {
 //	tongoClient, err := liteapi.NewClientWithDefaultMainnet()
