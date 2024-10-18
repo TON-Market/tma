@@ -30,6 +30,7 @@ type Market struct {
 	wallet    wallet.Wallet
 	WsCh      chan *EventDTO
 	ch        chan *DepositReq
+	profitCh  chan UserReturn
 	client    *liteapi.Client
 	snapshot  *snapshot
 	persistor *persistor
@@ -78,6 +79,10 @@ func (m *Market) Start(ctx context.Context) {
 			}
 		}
 		defer ticker.Stop()
+	}()
+
+	go func() {
+		m.startSendProcess(context.Background())
 	}()
 }
 
@@ -227,6 +232,7 @@ func GetMarket() *Market {
 			w,
 			make(chan *EventDTO),
 			make(chan *DepositReq, 10000),
+			make(chan UserReturn, 10000),
 			client,
 			&snapshot{
 				sync.RWMutex{},
