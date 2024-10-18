@@ -80,6 +80,7 @@ type Deal struct {
 	Collateral tlb.Grams
 	Size       tlb.Grams
 	DealStatus DealStatus
+	Attempts   int
 }
 
 // Bet persist data

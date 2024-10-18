@@ -164,26 +164,10 @@ func (m *Market) checkIfProfitDelivered(ctx context.Context, userProfit *UserPro
 	return false, nil
 }
 
-func (m *Market) getLastTransactions(ctx context.Context, userRawAddress string) ([]ton.Transaction, error) {
-	accountID, err := ton.ParseAccountID(userRawAddress)
-	if err != nil {
-		return nil, fmt.Errorf("failed get last transactions: %w", err)
-	}
-	for i := 0; i < 10; i++ {
-		l, err := m.client.GetLastTransactions(ctx, accountID, 10)
-		if err != nil {
-			time.Sleep(10 * time.Second)
-			continue
-		}
-		return l, nil
-	}
-	return nil, fmt.Errorf("failed get last transactions: tryied 10 times")
-}
-
 func (m *Market) isProfitTransaction(_ context.Context, trx ton.Transaction, userProfit *UserProfit) (bool, error) {
 	defer func() {
 		if r := recover(); r != nil {
-			log.Println("[ALARM] Recovered in isProfitTransaction\n\n", r)
+			log.Println("[ALARM] Recovered in isProfitTransaction", r)
 		}
 	}()
 	var t wallet.TextComment
