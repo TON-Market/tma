@@ -100,7 +100,6 @@ func (m *Market) Deposit(_ context.Context, dr *DepositReq) error {
 func (m *Market) checkIncomeTransactions(ctx context.Context) {
 	go func() {
 		for depositReq := range m.depositReqCh {
-
 			if depositReq.DepositStatus == ERROR {
 				if err := m.persistor.declineDeal(ctx, depositReq.ID); err != nil {
 					log.Printf("[ERROR] check income transaction failed, deal_id: %s, %s\n\n",
