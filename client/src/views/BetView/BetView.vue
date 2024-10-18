@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { CHAIN, useTonConnectModal, useTonConnectUI } from '@townsquarelabs/ui-vue';
 import { storeToRefs } from 'pinia';
-import { computed, ref } from 'vue';
+import { ref } from 'vue';
 import { VNumberInput } from 'vuetify/labs/VNumberInput';
 
 import BetTabs from './components/BetTabs.vue';
@@ -119,7 +119,10 @@ function onPctUpdated(value: number) {
 			</div>
 			<div class="bet-controls-row">
 				<span style="font-weight: 700">Available to trade</span>
-				<Balance />
+				<Balance
+					name="TON"
+					:bold="false"
+				/>
 			</div>
 			<div class="bet-controls-row">
 				<v-number-input
@@ -134,7 +137,7 @@ function onPctUpdated(value: number) {
 				<v-slider
 					v-model:model-value="pct"
 					color="purple"
-					:thumb-size="10"
+					:thumb-size="14"
 					:max="100"
 					:ticks="{
 						0: '0%',
