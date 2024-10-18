@@ -334,6 +334,10 @@ var ErrTransactionNotFound = errors.New("transaction not found in block chain")
 func (m *Market) iterateTransactionList(ctx context.Context, dr *DepositReq, userRawAddress string, trxList []ton.Transaction) (*Deal, error) {
 	for _, trx := range trxList {
 		var t wallet.TextComment
+		if len(trx.Msgs.OutMsgs.Values()) == 0 {
+			log.Printf("[WARNING]: malformed transaction, id: %s, user_raw_address: %s\n\n", dr.ID.String(), userRawAddress)
+			continue
+		}
 		if err := tlb.Unmarshal((*boc.Cell)(&trx.Msgs.OutMsgs.Values()[0].Value.Body.Value), &t); err != nil {
 			log.Printf("[WARNING] verify transaction, id: %s, user_raw_address: %s, can't unmarshal boc: %v\n\n", dr.ID.String(), userRawAddress, err)
 			continue

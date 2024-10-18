@@ -62,6 +62,7 @@ import (
 const SEED = "example consider fiscal mail guitar tiger duck exhibit ancient series differ wealth mix kitchen cactus upgrade unable yellow impact confirm denial mesh during dove"
 const my_ton_keeper_addr = "UQBbRSVWRlRH0D_OJ2pzj_Kaoeo5_Q3F-6GhDayX044Xr1fU"
 const sultan_ton_addr = "UQCh7h4Yx13eloWxHvQrerioosDDlp8WYRDH3sj6U3FCtZW5"
+const gleb_addr = "UQCc34X8ziXMgJyhmpZqgj-xX92h8Hfn-bfmT3gOSaDaacTi"
 
 func main() {
 	ctx := context.Background()
@@ -81,13 +82,13 @@ func main() {
 		log.Fatalln(err)
 	}
 
-	recepient, err := ton.AccountIDFromBase64Url(sultan_ton_addr)
+	recepient, err := ton.AccountIDFromBase64Url(gleb_addr)
 	if err != nil {
 		log.Fatalln(err)
 	}
 
 	m := wallet.SimpleTransfer{
-		Amount:     2500000000,
+		Amount:     1000000000,
 		Address:    recepient,
 		Comment:    uuid.NewString(),
 		Bounceable: false,
