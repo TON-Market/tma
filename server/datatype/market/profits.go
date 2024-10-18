@@ -2,7 +2,6 @@ package market
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"github.com/TON-Market/tma/server/datatype/token"
 	"github.com/google/uuid"
@@ -14,52 +13,66 @@ import (
 	"time"
 )
 
-type UserReturn struct {
-	Address string
-	Amount  tlb.Grams
-	LastTry time.Time
-	EventID string
+type UserProfit struct {
+	UserRawAddress string
+	Grams          tlb.Grams
+	LastTry        time.Time
+	EventID        string
 }
 
-func (m *Market) CloseEvent(ctx context.Context, id uuid.UUID, winToken token.Token) error {
-	if err := m.runtimer.close(ctx, id); err != nil {
+type TokenDeposits struct {
+	WinCollateral  tlb.Grams
+	LoseCollateral tlb.Grams
+}
+
+func (m *Market) CloseEvent(ctx context.Context, eventID uuid.UUID, winToken token.Token) error {
+	if err := m.runtimer.close(ctx, eventID); err != nil {
 		return fmt.Errorf("close event failed: %w", err)
 	}
-	time.Sleep(1 * time.Minute)
-	userTotalReturnMap, err := m.calcUsersProfit(ctx, id, winToken)
+	time.Sleep(5 * time.Minute)
+	userProfitList, err := m.buildUserProfitData(ctx, eventID, winToken)
 	if err != nil {
 		return fmt.Errorf("close event failed: %w", err)
 	}
 
-	go func() {
-		for addr, grams := range userTotalReturnMap {
-			ur := UserReturn{
-				Address: addr,
-				Amount:  grams,
-				LastTry: time.Now().Add(-2 * time.Minute),
-				EventID: id.String(),
-			}
-
-			m.profitCh <- ur
-		}
-	}()
-
-	if err = m.persistor.deleteEvent(ctx, id); err != nil {
-		return fmt.Errorf("delete event failed: %w", err)
-	}
+	m.broadcastUsersProfit(ctx, userProfitList)
+	m.writeToChannel(ctx, userProfitList)
 	return nil
 }
 
-type UserTotalReturnMap map[string]tlb.Grams
-
-var baseFee = tlb.Grams(7000000)
-
-func (m *Market) calcUsersProfit(ctx context.Context, id uuid.UUID, winToken token.Token) (UserTotalReturnMap, error) {
-	assetList, err := m.persistor.getEventAssets(ctx, id)
+func (m *Market) buildUserProfitData(ctx context.Context, eventID uuid.UUID, winToken token.Token) ([]*UserProfit, error) {
+	assetList, err := m.persistor.getEventAssets(ctx, eventID)
 	if err != nil {
-		return nil, fmt.Errorf("calc users profit failed: %w", err)
+		return nil, fmt.Errorf("calc user profit failed: %w", err)
 	}
 
+	tokenDeposits := m.getTokenDeposits(assetList, winToken)
+
+	userProfitList := make([]*UserProfit, 0)
+
+	for _, asset := range assetList {
+		if asset.Token != winToken {
+			continue
+		}
+
+		profit := m.calcUserProfit(ctx, asset, tokenDeposits)
+		if profit < 0 {
+			continue
+		}
+
+		userProfit := &UserProfit{
+			UserRawAddress: asset.UserRawAddress,
+			Grams:          profit,
+			EventID:        eventID.String(),
+		}
+
+		userProfitList = append(userProfitList, userProfit)
+	}
+
+	return userProfitList, nil
+}
+
+func (m *Market) getTokenDeposits(assetList []*Asset, winToken token.Token) *TokenDeposits {
 	var loseCollateral tlb.Grams
 	var winCollateral tlb.Grams
 
@@ -71,97 +84,133 @@ func (m *Market) calcUsersProfit(ctx context.Context, id uuid.UUID, winToken tok
 		}
 	}
 
-	userTotalReturnMap := make(UserTotalReturnMap)
-
-	for _, asset := range assetList {
-		if asset.Token != winToken {
-			continue
-		}
-
-		rest := float64(asset.CollateralStaked) / float64(winCollateral)
-		profit := rest * float64(loseCollateral)
-		userTotalReturn := profit + float64(asset.CollateralStaked)
-		returnGrams := tlb.Grams(userTotalReturn) - baseFee
-
-		log.Printf("[INFO] user_addr: %s, return_grams: %d\n\n", asset.UserRawAddress, returnGrams)
-
-		if returnGrams < 0 {
-			continue
-		}
-		userTotalReturnMap[asset.UserRawAddress] = returnGrams
+	return &TokenDeposits{
+		WinCollateral:  winCollateral,
+		LoseCollateral: loseCollateral,
 	}
-
-	return userTotalReturnMap, nil
 }
 
-func (m *Market) startSendProcess(ctx context.Context) {
-	for ur := range m.profitCh {
-		if ur.LastTry.Add(2 * time.Minute).After(time.Now()) {
-			m.profitCh <- ur
+var baseFee = tlb.Grams(7000000)
+
+func (m *Market) calcUserProfit(_ context.Context, asset *Asset, tokenDeposits *TokenDeposits) tlb.Grams {
+	rest := float64(asset.CollateralStaked) / float64(tokenDeposits.WinCollateral)
+	profit := rest * float64(tokenDeposits.WinCollateral)
+	userTotalReturn := profit + float64(asset.CollateralStaked)
+	returnGrams := tlb.Grams(userTotalReturn) - baseFee
+	return returnGrams
+}
+
+func (m *Market) broadcastUsersProfit(ctx context.Context, userProfitList []*UserProfit) {
+	for _, userProfit := range userProfitList {
+		if err := m.trySendProfit(ctx, userProfit); err != nil {
+			log.Printf("[ERROR] try send profit for user: %s, grams: %v failed: %s\n\n",
+				userProfit.UserRawAddress, userProfit.Grams, err.Error())
 			continue
 		}
+	}
+}
 
-		accountID, err := ton.ParseAccountID(ur.Address)
-		if err != nil {
-			log.Printf("[ERROR] err check outcome transaction for user: %s\n\n", ur.Address)
-			m.profitCh <- ur
-			continue
-		}
+func (m *Market) writeToChannel(_ context.Context, userProfitList []*UserProfit) {
+	for _, userProfit := range userProfitList {
+		m.profitCh <- userProfit
+	}
+}
 
-		getLastTransactions := func() ([]ton.Transaction, error) {
-			for i := 0; i < 10; i++ {
-				l, err := m.client.GetLastTransactions(ctx, accountID, 10)
-				if err != nil {
-					time.Sleep(5 * time.Second)
-					continue
-				}
-				return l, nil
+func (m *Market) startResendProcess(ctx context.Context) {
+	go func() {
+		for userProfit := range m.profitCh {
+			if userProfit.LastTry.Add(3 * time.Minute).After(time.Now()) {
+				m.profitCh <- userProfit
+				continue
 			}
-			return nil, fmt.Errorf("transaction not found: %v", err)
-		}
 
-		log.Printf("\n[INFO] getting outcome transaction list for user: %s\n\n", ur.Address)
-		trxList, err := getLastTransactions()
-		if err != nil {
-			log.Printf("[ERROR] get outcome trx list for user: %s, err: %s\n\n", ur.Address, err.Error())
-			continue
-		}
+			isProfitDelivered, err := m.checkIfProfitDelivered(ctx, userProfit)
+			if err != nil {
+				log.Printf("[ERROR] check profit delivered failed: %s\n\n", err.Error())
+				continue
+			}
 
-		if err = iterateUsersIncomeTransactionList(trxList, ur); err != nil && errors.Is(err, ErrUserIncomeTransactionNotFound) {
-			m.profitCh <- ur
+			if !isProfitDelivered {
+				log.Printf("[WARNING] profit for user: %s, grams: %v still pending\n\n",
+					userProfit.UserRawAddress, userProfit.Grams)
+
+				if err = m.trySendProfit(ctx, userProfit); err != nil {
+					log.Printf("[ERROR] try send profit for user: %s, grams: %v failed: %s\n\n",
+						userProfit.UserRawAddress, userProfit.Grams, err.Error())
+				}
+				m.profitCh <- userProfit
+			}
+			log.Printf("[SUCCESS] profit for user: %s, grams: %v delivered\n\n",
+				userProfit.UserRawAddress, userProfit.Grams)
 		}
-	}
+	}()
 }
 
-var ErrUserIncomeTransactionNotFound = errors.New("user income transaction not found")
+func (m *Market) checkIfProfitDelivered(ctx context.Context, userProfit *UserProfit) (bool, error) {
+	trxList, err := m.getLastTransactions(ctx, userProfit.UserRawAddress)
+	if err != nil {
+		return false, fmt.Errorf("check if profit delivered failed: %w", err)
+	}
 
-func iterateUsersIncomeTransactionList(trxList []ton.Transaction, ur UserReturn) error {
 	for _, trx := range trxList {
-		var t wallet.TextComment
-		if err := tlb.Unmarshal((*boc.Cell)(&trx.Msgs.InMsg.Value.Value.Body.Value), &t); err != nil {
-			log.Printf("[WARNING] unmarshalling boc for outcome trx, user: %s, %s", ur.Address, err.Error())
+		isProfitTransaction, err := m.isProfitTransaction(ctx, trx, userProfit)
+		if err != nil {
 			continue
 		}
-
-		idStr := wallet.TextComment("profit " + ur.EventID)
-
-		if t == idStr {
-			log.Printf("[SUCCESS] user: %s, got grams: %v\n\n", ur.Address, ur.Amount)
-			return nil
+		if isProfitTransaction {
+			return true, nil
 		}
 	}
-	return ErrUserIncomeTransactionNotFound
+	return false, nil
 }
 
-func (m *Market) trySend(ctx context.Context, address, eventId string, grams tlb.Grams) error {
-	r := ton.MustParseAccountID(address)
+func (m *Market) getLastTransactions(ctx context.Context, userRawAddress string) ([]ton.Transaction, error) {
+	accountID, err := ton.ParseAccountID(userRawAddress)
+	if err != nil {
+		return nil, fmt.Errorf("failed get last transactions: %w", err)
+	}
+	for i := 0; i < 10; i++ {
+		l, err := m.client.GetLastTransactions(ctx, accountID, 10)
+		if err != nil {
+			time.Sleep(10 * time.Second)
+			continue
+		}
+		return l, nil
+	}
+	return nil, fmt.Errorf("failed get last transactions: tryied 10 times")
+}
+
+func (m *Market) isProfitTransaction(_ context.Context, trx ton.Transaction, userProfit *UserProfit) (bool, error) {
+	defer func() {
+		if r := recover(); r != nil {
+			log.Println("[ALARM] Recovered in isProfitTransaction\n\n", r)
+		}
+	}()
+	var t wallet.TextComment
+	if err := tlb.Unmarshal((*boc.Cell)(&trx.Msgs.InMsg.Value.Value.Body.Value), &t); err != nil {
+		return false, fmt.Errorf("unmarshal transaction failed: %w", err)
+	}
+
+	comment := wallet.TextComment("event closed: " + userProfit.EventID)
+
+	if t == comment {
+		return true, nil
+	}
+
+	return false, nil
+}
+
+func (m *Market) trySendProfit(ctx context.Context, userProfit *UserProfit) error {
+	recipient := ton.MustParseAccountID(userProfit.UserRawAddress)
 
 	message := wallet.SimpleTransfer{
-		Amount:     grams,
-		Address:    r,
-		Comment:    "profit: " + eventId,
+		Amount:     userProfit.Grams,
+		Address:    recipient,
+		Comment:    "event closed: " + userProfit.EventID,
 		Bounceable: true,
 	}
+
+	userProfit.LastTry = time.Now()
 
 	if err := m.wallet.Send(ctx, message); err != nil {
 		return err
