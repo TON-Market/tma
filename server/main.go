@@ -51,7 +51,7 @@ func main() {
 
 func testData() {
 	e := &market.Event{
-		Tag:      market.Politic,
+		Tag:      market.Crypto,
 		LogoLink: "",
 		Title:    "Will Ton Market win hackathon?",
 		BetMap: map[token.Token]*market.Bet{
@@ -67,7 +67,28 @@ func testData() {
 			},
 		},
 	}
+	elections := &market.Event{
+		Tag:      market.Politic,
+		LogoLink: "https://www.cft.org/sites/main/files/imagecache/medium/main-images/elections_2024_2_0.png?1718390367",
+		Title:    "USA Elections 2024",
+		BetMap: map[token.Token]*market.Bet{
+			token.A: {
+				Token:    token.A,
+				Title:    "Trump",
+				LogoLink: "https://upload.wikimedia.org/wikipedia/commons/5/56/Donald_Trump_official_portrait.jpg",
+			},
+			token.B: {
+				Token:    token.B,
+				Title:    "Harris",
+				LogoLink: "https://www.whitehouse.gov/wp-content/uploads/2021/04/V20210305LJ-0043.jpg",
+			},
+		},
+	}
 	err := market.GetMarket().AddEvent(context.Background(), e)
+	if err != nil {
+		log.Fatalln(err)
+	}
+	err = market.GetMarket().AddEvent(context.Background(), elections)
 	if err != nil {
 		log.Fatalln(err)
 	}
