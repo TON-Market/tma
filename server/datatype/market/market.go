@@ -101,17 +101,6 @@ func (m *Market) checkIncomeTransactions(ctx context.Context) {
 	go func() {
 		for depositReq := range m.depositReqCh {
 
-			attempts, err := m.persistor.attemptDeal(ctx, depositReq.ID)
-			if err != nil {
-				m.depositReqCh <- depositReq
-				continue
-			}
-
-			if attempts > 5 {
-				log.Printf("[ERROR] deal %v out of attempts\n\n", attempts)
-				continue
-			}
-
 			if depositReq.DepositStatus == ERROR {
 				if err := m.persistor.declineDeal(ctx, depositReq.ID); err != nil {
 					log.Printf("[ERROR] check income transaction failed, deal_id: %s, %s\n\n",
@@ -123,6 +112,7 @@ func (m *Market) checkIncomeTransactions(ctx context.Context) {
 
 			if depositReq.Time.Add(20 * time.Second).After(time.Now()) {
 				m.depositReqCh <- depositReq
+				continue
 			}
 
 			isDepositDelivered, _ := m.tryCheckIfDepositDelivered(ctx, depositReq)
@@ -132,13 +122,25 @@ func (m *Market) checkIncomeTransactions(ctx context.Context) {
 				}
 				continue
 			}
+
+			attempts, err := m.persistor.attemptDeal(ctx, depositReq.ID)
+			if err != nil {
+				m.depositReqCh <- depositReq
+				continue
+			}
+
+			if attempts > 5 {
+				log.Printf("[ERROR] deal %v out of attempts\n\n", attempts)
+				continue
+			}
+
 			m.depositReqCh <- depositReq
 		}
 	}()
 }
 
 func (m *Market) tryCheckIfDepositDelivered(ctx context.Context, depositReq *DepositReq) (bool, error) {
-	depositReq.Time.Add(20 * time.Second)
+	depositReq.Time = depositReq.Time.Add(20 * time.Second)
 	userRawAddress, err := m.persistor.getUserAddressByUncheckedDealID(ctx, depositReq.ID)
 	if err != nil {
 		return false, err
@@ -190,7 +192,7 @@ func (m *Market) confirmSuccessTransaction(ctx context.Context, depositReq *Depo
 	if err = m.runtimer.deposit(ctx, deal); err != nil {
 		return err
 	}
-	if err = m.sendToSocket(ctx, deal.ID); err != nil {
+	if err = m.sendToSocket(ctx, deal.EventID); err != nil {
 		return err
 	}
 	return nil
@@ -295,7 +297,7 @@ func GetMarket() *Market {
 func (m *Market) Start(ctx context.Context) {
 	ticker := time.NewTicker(5 * time.Second)
 
-	for i := 0; i < 3; i++ {
+	for i := 0; i < 1; i++ {
 		m.checkIncomeTransactions(ctx)
 	}
 

@@ -112,7 +112,7 @@ func (p *persistor) saveDeal(ctx context.Context, d *Deal) error {
 
 	colStr := strconv.FormatUint(uint64(d.Collateral), 10)
 
-	if _, err := tx.Exec(ctx, dq, d.ID, d.EventID, d.Token, colStr, d.Size, d.UserRawAddr, d.DealStatus); err != nil {
+	if _, err := tx.Exec(ctx, dq, d.ID, d.EventID, d.Token, colStr, d.Size, d.UserRawAddr, d.DealStatus, d.Attempts); err != nil {
 		return fmt.Errorf("%w: %w: %w", ErrPersistDeal, db.ErrTransactionFailed, err)
 	}
 

@@ -29,7 +29,7 @@ create table if not exists deals
         constraint fk_user_raw_addr
             references users
             on delete cascade,
-    deal_status   integer default 0 not null
+    deal_status   integer default 0 not null,
 	attempts integer default 0
 );
 

@@ -29,7 +29,8 @@ func (m *Market) CloseEvent(ctx context.Context, eventID uuid.UUID, winToken tok
 	if err := m.runtimer.close(ctx, eventID); err != nil {
 		return fmt.Errorf("close event failed: %w", err)
 	}
-	time.Sleep(5 * time.Minute)
+	//time.Sleep(5 * time.Minute)
+	time.Sleep(20 * time.Second)
 	userProfitList, err := m.buildUserProfitData(ctx, eventID, winToken)
 	if err != nil {
 		return fmt.Errorf("close event failed: %w", err)
@@ -94,7 +95,7 @@ var baseFee = tlb.Grams(7000000)
 
 func (m *Market) calcUserProfit(_ context.Context, asset *Asset, tokenDeposits *TokenDeposits) tlb.Grams {
 	rest := float64(asset.CollateralStaked) / float64(tokenDeposits.WinCollateral)
-	profit := rest * float64(tokenDeposits.WinCollateral)
+	profit := rest * float64(tokenDeposits.LoseCollateral)
 	userTotalReturn := profit + float64(asset.CollateralStaked)
 	returnGrams := tlb.Grams(userTotalReturn) - baseFee
 	return returnGrams
