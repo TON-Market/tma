@@ -112,8 +112,8 @@ func (h *handler) ProofHandler(c echo.Context) error {
 	cookie.Value = signedToken
 	cookie.Expires = time.Now().Add(24 * 365 * time.Hour)
 	cookie.Path = "/"
-	cookie.HttpOnly = false
-	cookie.Secure = false
+	cookie.HttpOnly = true
+	cookie.Secure = true
 	c.SetCookie(cookie)
 
 	return c.JSON(http.StatusOK, echo.Map{
@@ -143,8 +143,8 @@ func (h *handler) Disconnect(c echo.Context) error {
 	cookie.Value = "null"
 	cookie.Expires = time.Now().Add(-time.Hour)
 	cookie.Path = "/"
-	cookie.HttpOnly = false
-	cookie.Secure = false
+	cookie.HttpOnly = true
+	cookie.Secure = true
 	c.SetCookie(cookie)
 	return c.JSON(http.StatusOK, "ok")
 }
