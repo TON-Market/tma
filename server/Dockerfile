@@ -16,6 +16,6 @@ COPY --from=builder /app/main .
 COPY --from=builder /app/server.crt .
 COPY --from=builder /app/server.key .
 
-EXPOSE 8443
+EXPOSE 8081
 
 CMD ["./main"]
