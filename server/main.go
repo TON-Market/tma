@@ -2,7 +2,7 @@ package main
 
 import (
 	"context"
-	"crypto/tls"
+	"fmt"
 	"github.com/TON-Market/tma/server/config"
 	"github.com/TON-Market/tma/server/datatype/market"
 	"github.com/TON-Market/tma/server/datatype/token"
@@ -11,7 +11,6 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/tonkeeper/tongo/liteapi"
 	"github.com/tonkeeper/tongo/tonconnect"
-	"net/http"
 	_ "net/http/pprof"
 )
 
@@ -47,15 +46,17 @@ func main() {
 
 	testData()
 
-	s := http.Server{
-		Addr:    ":8443",
-		Handler: e,
-		TLSConfig: &tls.Config{
-			MinVersion: tls.VersionTLS12,
-		},
-	}
+	//s := http.Server{
+	//	Addr:    ":8443",
+	//	Handler: e,
+	//	TLSConfig: &tls.Config{
+	//		MinVersion: tls.VersionTLS12,
+	//	},
+	//}
 
-	log.Fatal(s.ListenAndServeTLS("./server.crt", "./server.key"))
+	//log.Fatal(s.ListenAndServeTLS("./server.crt", "./server.key"))
+
+	log.Fatal(e.Start(fmt.Sprintf(":%v", config.Config.Port)))
 }
 
 func testData() {
