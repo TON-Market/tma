@@ -13,8 +13,6 @@ FROM alpine:latest
 WORKDIR /app
 
 COPY --from=builder /app/main .
-COPY --from=builder /app/server.crt .
-COPY --from=builder /app/server.key .
 
 EXPOSE 8081
 

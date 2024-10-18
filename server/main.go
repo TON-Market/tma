@@ -46,16 +46,6 @@ func main() {
 
 	testData()
 
-	//s := http.Server{
-	//	Addr:    ":8443",
-	//	Handler: e,
-	//	TLSConfig: &tls.Config{
-	//		MinVersion: tls.VersionTLS12,
-	//	},
-	//}
-
-	//log.Fatal(s.ListenAndServeTLS("./server.crt", "./server.key"))
-
 	log.Fatal(e.Start(fmt.Sprintf(":%v", config.Config.Port)))
 }
 
